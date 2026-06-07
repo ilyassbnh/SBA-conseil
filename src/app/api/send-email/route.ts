@@ -12,6 +12,7 @@ export async function POST(request: Request) {
       codePostal,
       immatriculation,
       datePermis,
+      categoriePermis,
       dejaAssure,
       moisAssurance,
       crm,
@@ -77,9 +78,40 @@ export async function POST(request: Request) {
         );
       }
 
-      if (!crm || typeof crm !== "string" || crm.trim() === "") {
+      // Valider la catégorie de permis
+      if (!categoriePermis || typeof categoriePermis !== "string") {
+        return NextResponse.json(
+          { success: false, message: "La catégorie du permis est obligatoire." },
+          { status: 400 }
+        );
+      }
+
+      if (assuranceType === "Automobile" && !["B", "B1", "BE"].includes(categoriePermis)) {
+        return NextResponse.json(
+          { success: false, message: "La catégorie de permis est invalide pour une assurance Automobile." },
+          { status: 400 }
+        );
+      }
+
+      if (assuranceType === "Moto" && !["A", "AM", "A1", "A2"].includes(categoriePermis)) {
+        return NextResponse.json(
+          { success: false, message: "La catégorie de permis est invalide pour une assurance Moto." },
+          { status: 400 }
+        );
+      }
+
+      // Valider le CRM (Bonus/Malus) entre 0.50 et 5.00
+      if (!crm || typeof crm !== "string") {
         return NextResponse.json(
           { success: false, message: "Le coefficient de réduction majoration (CRM) est obligatoire." },
+          { status: 400 }
+        );
+      }
+
+      const crmNum = parseFloat(crm);
+      if (isNaN(crmNum) || crmNum < 0.50 || crmNum > 5.00) {
+        return NextResponse.json(
+          { success: false, message: "Le CRM doit être un nombre compris entre 0.50 et 5.00." },
           { status: 400 }
         );
       }
@@ -122,6 +154,7 @@ export async function POST(request: Request) {
       console.log("--- CARACTÉRISTIQUES VÉHICULE ---");
       console.log(`Immatriculation :   ${immatriculation}`);
       console.log(`Date Permis :       ${datePermis}`);
+      console.log(`Catégorie Permis :  ${categoriePermis}`);
       console.log(`CRM (Bonus/Malus) : ${crm}`);
       console.log(`Déjà assuré :       ${dejaAssure}`);
       if (dejaAssure === "Oui") {

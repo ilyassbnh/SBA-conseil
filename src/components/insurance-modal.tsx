@@ -47,7 +47,7 @@ const trottinetteSchema = z.object({
 
 type TrottinetteFormData = z.infer<typeof trottinetteSchema>;
 
-// Zod Schema Path B: Automobile / Moto (Enhanced with conditional history and CRM)
+// Zod Schema Path B: Automobile / Moto (Enhanced with permit category and CRM range)
 const autoMotoSchema = z.object({
   immatriculation: z
     .string({ message: "Le numéro d'immatriculation est requis." })
@@ -55,13 +55,20 @@ const autoMotoSchema = z.object({
     .regex(/^[A-Z]{2}-\d{3}-[A-Z]{2}$/i, "Format d'immatriculation invalide. Exemple: AA-123-AA"),
   nom: z.string({ message: "Le nom complet est requis." }).min(1, "Le nom complet est requis."),
   datePermis: z.string({ message: "La date d'obtention du permis est requise." }).min(1, "La date d'obtention du permis est requise."),
+  categoriePermis: z.string({ message: "La catégorie du permis est requise." }).min(1, "La catégorie du permis est requise."),
   email: z.string({ message: "L'adresse e-mail est requise." }).email("Adresse e-mail invalide."),
   telephone: z.string({ message: "Le numéro de téléphone est requis." }).min(8, "Le numéro de téléphone doit être valide."),
   dejaAssure: z.enum(["Oui", "Non"], {
     message: "Veuillez indiquer si vous avez été assuré au cours des 3 dernières années.",
   }),
   moisAssurance: z.string().optional(),
-  crm: z.string({ message: "Le coefficient CRM (Bonus-Malus) est requis." }).min(1, "Le coefficient CRM est requis."),
+  crm: z
+    .string({ message: "Le coefficient CRM (Bonus-Malus) est requis." })
+    .min(1, "Le coefficient CRM est requis.")
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0.50 && num <= 5.00;
+    }, { message: "Le CRM doit être compris entre 0.50 et 5.00." }),
 }).refine((data) => {
   if (data.dejaAssure === "Oui" && (!data.moisAssurance || data.moisAssurance.trim() === "")) {
     return false;
@@ -139,6 +146,36 @@ const choices: InsuranceChoice[] = [
   },
 ];
 
+// Formatting helper for registration plate AA-123-AA
+const formatImmatriculation = (val: string): string => {
+  const cleaned = val.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+  let formatted = "";
+  
+  for (let i = 0; i < cleaned.length && i < 7; i++) {
+    const char = cleaned[i];
+    if (i < 2) {
+      if (/[A-Z]/.test(char)) {
+        formatted += char;
+      }
+    } else if (i < 5) {
+      if (/[0-9]/.test(char)) {
+        if (i === 2 && formatted.length === 2) {
+          formatted += "-";
+        }
+        formatted += char;
+      }
+    } else {
+      if (/[A-Z]/.test(char)) {
+        if (i === 5 && formatted.length === 6) {
+          formatted += "-";
+        }
+        formatted += char;
+      }
+    }
+  }
+  return formatted;
+};
+
 export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: InsuranceModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedChoice, setSelectedChoice] = useState<InsuranceChoice | null>(null);
@@ -171,6 +208,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
       immatriculation: "",
       nom: "",
       datePermis: "",
+      categoriePermis: "",
       email: "",
       telephone: "",
       dejaAssure: undefined,
@@ -265,6 +303,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
         immatriculation: data.immatriculation,
         nom: data.nom,
         datePermis: data.datePermis,
+        categoriePermis: data.categoriePermis,
         email: data.email,
         telephone: data.telephone,
         assuranceType: selectedChoice.title,
@@ -295,7 +334,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
     }
   };
 
-  // Setup uppercase masking helper
+  // Setup registration plate masking onChange handler
   const { onChange: onImmatriculationChange, ...immatriculationRest } = autoMotoForm.register("immatriculation");
 
   // Handle appointment confirmation
@@ -555,8 +594,10 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                         <Input
                           id="immatriculation-am"
                           placeholder="AA-123-AA"
+                          maxLength={9}
                           onChange={(e) => {
-                            e.target.value = e.target.value.toUpperCase();
+                            const formatted = formatImmatriculation(e.target.value);
+                            e.target.value = formatted;
                             onImmatriculationChange(e);
                           }}
                           {...immatriculationRest}
@@ -573,7 +614,11 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                         </Label>
                         <Input
                           id="crm-am"
-                          placeholder="0.50"
+                          type="number"
+                          min="0.50"
+                          max="5.00"
+                          step="0.01"
+                          placeholder="0.68"
                           {...autoMotoForm.register("crm")}
                           className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                         />
@@ -599,19 +644,51 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="datePermis-am" className="text-sm font-medium text-slate-700">
-                          Date d'obtention du permis *
-                        </Label>
-                        <Input
-                          id="datePermis-am"
-                          type="date"
-                          {...autoMotoForm.register("datePermis")}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                        />
-                        {autoMotoForm.formState.errors.datePermis && (
-                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.datePermis.message}</p>
-                        )}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="datePermis-am" className="text-sm font-medium text-slate-700">
+                            Date d'obtention *
+                          </Label>
+                          <Input
+                            id="datePermis-am"
+                            type="date"
+                            {...autoMotoForm.register("datePermis")}
+                            className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          />
+                          {autoMotoForm.formState.errors.datePermis && (
+                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.datePermis.message}</p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="categoriePermis-am" className="text-sm font-medium text-slate-700">
+                            Catégorie permis *
+                          </Label>
+                          <select
+                            id="categoriePermis-am"
+                            {...autoMotoForm.register("categoriePermis")}
+                            className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none"
+                          >
+                            <option value="">Permis...</option>
+                            {selectedChoice.id === "auto" ? (
+                              <>
+                                <option value="B">B</option>
+                                <option value="B1">B1</option>
+                                <option value="BE">BE</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="A">A</option>
+                                <option value="AM">AM</option>
+                                <option value="A1">A1</option>
+                                <option value="A2">A2</option>
+                              </>
+                            )}
+                          </select>
+                          {autoMotoForm.formState.errors.categoriePermis && (
+                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.categoriePermis.message}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
 

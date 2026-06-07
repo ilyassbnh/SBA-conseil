@@ -5,13 +5,13 @@ import { Mail, Phone, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-[#0B132B] border-t border-primary/15 text-slate-300">
+    <footer className="bg-slate-950/80 border-t border-primary/15 text-slate-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand Column */}
           <div className="space-y-6">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-[#D4AF37]/25 bg-slate-900/50 shadow-md transition-transform group-hover:scale-105 duration-300">
+              <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-primary/25 bg-slate-900/50 shadow-md transition-transform group-hover:scale-105 duration-300">
                 <Image
                   src="/image_0.png"
                   alt="SBA Conseil Logo"
@@ -23,12 +23,12 @@ export function Footer() {
                 <span className="font-bold text-lg tracking-wider text-gold-gradient uppercase leading-none">
                   SBA Conseil
                 </span>
-                <span className="text-[9px] text-slate-300 tracking-wider uppercase mt-1">
+                <span className="text-[9px] text-muted-foreground tracking-wider uppercase mt-1">
                   Courtier d'Assurances
                 </span>
               </div>
             </Link>
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed">
               Cabinet de courtage en assurances de prestige en France. Nous concevons des solutions sur-mesure pour protéger vos biens les plus précieux.
             </p>
           </div>

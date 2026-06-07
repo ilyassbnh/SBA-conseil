@@ -205,7 +205,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-slate-900">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header onGetQuoteClick={() => handleOpenModal()} />
 
       <main className="flex-grow">
@@ -213,30 +213,30 @@ export default function Home() {
         <section className="relative overflow-hidden pt-20 pb-24 sm:pb-32 lg:pt-28 lg:pb-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
             {/* Trust Pill */}
-            <div className="inline-flex items-center gap-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-4 py-1.5 rounded-full mb-8 animate-fade-in backdrop-blur-md">
-              <span className="flex h-2 w-2 rounded-full bg-[#D4AF37] animate-pulse" />
-              <span className="text-xs font-semibold text-[#AA7C11] uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full mb-8 animate-fade-in backdrop-blur-md">
+              <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-xs font-semibold text-primary uppercase tracking-widest">
                 🏆 Courtier en Assurances de Prestige
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-tight max-w-5xl mx-auto">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-white leading-tight max-w-5xl mx-auto">
               <span className="text-gold-gradient block mb-3">SBA CONSEIL</span>
-              <span className="text-slate-800 block text-2xl sm:text-3xl lg:text-4xl font-bold tracking-wider uppercase mt-4">
+              <span className="text-silver-gradient block text-2xl sm:text-3xl lg:text-4xl font-bold tracking-wider uppercase mt-4">
                 "ENSEMBLE, CONSTRUISONS VOTRE AVENIR ASSURÉ"
               </span>
             </h1>
 
-            <p className="mt-8 text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-light">
+            <p className="mt-8 text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-light">
               L'excellence du courtage pour vos véhicules d'exception et du quotidien. Sélectionnez votre couverture et obtenez votre devis personnalisé en moins de 2 minutes.
             </p>
 
             <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-5">
               <Button
                 onClick={() => handleOpenModal()}
-                className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#c39e2e] text-slate-950 text-base font-bold py-5 px-9 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 flex items-center justify-center gap-2 group border border-[#D4AF37]/20 cursor-pointer"
+                className="w-full sm:w-auto bg-gold-gradient hover:opacity-90 text-primary-foreground text-base font-bold py-5 px-9 rounded-xl shadow-lg shadow-primary/15 transition-all duration-300 flex items-center justify-center gap-2 group border border-primary/20 cursor-pointer"
               >
-                Obtenir mon devis
+                Obtenir un devis personnalisé
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button
@@ -244,43 +244,43 @@ export default function Home() {
                 onClick={() => {
                   document.getElementById("services")?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="w-full sm:w-auto border-[#0B132B]/20 hover:border-[#0B132B]/50 text-[#0B132B] hover:bg-slate-100 bg-white font-bold text-base py-5 px-9 rounded-xl shadow-sm transition-all duration-200 cursor-pointer"
+                className="w-full sm:w-auto border-primary/20 hover:border-primary/50 text-slate-300 hover:text-white bg-slate-900/40 hover:bg-slate-900/80 font-bold text-base py-5 px-9 rounded-xl shadow-sm transition-all duration-200 cursor-pointer backdrop-blur-sm"
               >
                 Découvrir nos offres
               </Button>
             </div>
 
             {/* Quick Metrics */}
-            <div className="mt-20 sm:mt-24 border-t border-slate-200 pt-10 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="mt-20 sm:mt-24 border-t border-primary/10 pt-10 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
               <div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">10+ Ans</p>
-                <p className="text-xs font-semibold text-[#AA7C11] uppercase tracking-widest mt-2">D'Expertise</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-white">10+ Ans</p>
+                <p className="text-xs font-semibold text-primary uppercase tracking-widest mt-2">D'Expertise</p>
               </div>
               <div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">99,2%</p>
-                <p className="text-xs font-semibold text-[#AA7C11] uppercase tracking-widest mt-2">De Satisfaction</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-white">99,2%</p>
+                <p className="text-xs font-semibold text-primary uppercase tracking-widest mt-2">De Satisfaction</p>
               </div>
               <div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">&lt; 2 Min</p>
-                <p className="text-xs font-semibold text-[#AA7C11] uppercase tracking-widest mt-2">Devis En Ligne</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-white">&lt; 2 Min</p>
+                <p className="text-xs font-semibold text-primary uppercase tracking-widest mt-2">Devis En Ligne</p>
               </div>
               <div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">24h/24</p>
-                <p className="text-xs font-semibold text-[#AA7C11] uppercase tracking-widest mt-2">Conseillers Dédiés</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-white">24h/24</p>
+                <p className="text-xs font-semibold text-primary uppercase tracking-widest mt-2">Conseillers Dédiés</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* Vehicle Insurances Choices */}
-        <section id="services" className="py-24 sm:py-32 bg-slate-50 border-y border-slate-200 relative">
+        <section id="services" className="py-24 sm:py-32 bg-slate-950/40 border-y border-primary/10 relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
-              <h2 className="text-sm font-bold text-[#AA7C11] uppercase tracking-widest">Nos Offres Mobilité</h2>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-sm font-bold text-primary uppercase tracking-widest">Nos Offres Mobilité</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 Assurances Véhicules Sur-Mesure
               </h2>
-              <p className="text-slate-600 leading-relaxed font-light">
+              <p className="text-slate-400 leading-relaxed font-light">
                 Sélectionnez le type de véhicule pour lequel vous souhaitez recevoir une étude tarifaire personnalisée par nos experts de courtage.
               </p>
             </div>
@@ -294,21 +294,21 @@ export default function Home() {
                     className="glass-card glass-card-hover p-8 rounded-2xl flex flex-col justify-between"
                   >
                     <div>
-                      <div className="inline-flex p-3.5 rounded-xl bg-[#D4AF37]/10 text-[#AA7C11] mb-6">
+                      <div className="inline-flex p-3.5 rounded-xl bg-primary/10 text-primary mb-6">
                         <IconComponent className="h-6 w-6" />
                       </div>
-                      <h3 className="text-xl font-bold text-slate-900 mb-3 text-gold-gradient">
+                      <h3 className="text-xl font-bold text-white mb-3 text-gold-gradient">
                         {offer.title}
                       </h3>
-                      <p className="text-slate-600 text-sm leading-relaxed mb-8 font-light font-sans">
+                      <p className="text-slate-300 text-sm leading-relaxed mb-8 font-light font-sans">
                         {offer.description}
                       </p>
                     </div>
                     <Button
                       onClick={() => handleOpenModal(offer.id)}
-                      className="w-full bg-[#D4AF37] hover:bg-[#c39e2e] text-slate-950 rounded-xl py-3 font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 group/btn cursor-pointer"
+                      className="w-full bg-slate-900 hover:bg-gold-gradient text-white hover:text-primary-foreground border border-primary/25 rounded-xl py-3 font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 group/btn cursor-pointer"
                     >
-                      Obtenir mon devis
+                      Obtenir un devis {offer.title.split(" ")[0]}
                       <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
                     </Button>
                   </div>
@@ -322,11 +322,11 @@ export default function Home() {
         <section className="py-24 sm:py-32">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
-              <h2 className="text-sm font-bold text-[#AA7C11] uppercase tracking-widest">Une Expertise Globale</h2>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-sm font-bold text-primary uppercase tracking-widest">Une Expertise Globale</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 Votre Patrimoine & Personne Protégés
               </h2>
-              <p className="text-slate-600 leading-relaxed font-light">
+              <p className="text-slate-400 leading-relaxed font-light">
                 SBA Conseil vous propose un accompagnement complet au-delà de la mobilité, couvrant toutes les dimensions de votre sécurité.
               </p>
             </div>
@@ -337,13 +337,13 @@ export default function Home() {
                 return (
                   <div
                     key={idx}
-                    className="glass-card p-8 rounded-2xl border border-slate-200 flex flex-col items-center text-center space-y-4 shadow-lg"
+                    className="glass-card p-8 rounded-2xl border border-primary/10 flex flex-col items-center text-center space-y-4 shadow-lg"
                   >
-                    <div className="p-4 rounded-full bg-[#D4AF37]/10 text-[#AA7C11] mb-2">
+                    <div className="p-4 rounded-full bg-primary/10 text-primary mb-2">
                       <IconComponent className="h-8 w-8" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 text-gold-gradient">{item.title}</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed font-light">{item.description}</p>
+                    <h3 className="text-lg font-bold text-white text-gold-gradient">{item.title}</h3>
+                    <p className="text-slate-300 text-sm leading-relaxed font-light">{item.description}</p>
                   </div>
                 );
               })}
@@ -352,17 +352,17 @@ export default function Home() {
         </section>
 
         {/* Features / Why Us Section */}
-        <section id="about" className="py-24 sm:py-32 bg-white border-t border-slate-200">
+        <section id="about" className="py-24 sm:py-32 bg-slate-950/30 border-t border-primary/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 items-center">
               <div className="space-y-6 lg:col-span-1">
-                <div className="inline-flex bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-3 py-1 rounded-full text-xs font-semibold text-[#AA7C11] uppercase tracking-widest">
+                <div className="inline-flex bg-primary/10 border border-primary/20 px-3 py-1 rounded-full text-xs font-semibold text-primary uppercase tracking-widest">
                   Pourquoi SBA Conseil
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+                <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
                   L'exigence d'un courtier d'exception
                 </h2>
-                <p className="text-slate-600 leading-relaxed font-light">
+                <p className="text-slate-300 leading-relaxed font-light">
                   Nous nous positionnons à l'intersection entre tradition, réactivité et innovation digitale, pour structurer vos contrats d'assurances autour d'une transparence absolue.
                 </p>
                 <ul className="space-y-4 pt-2">
@@ -371,8 +371,8 @@ export default function Home() {
                     "Ajustement des plafonds de couverture à tout moment",
                     "Règlement rapide des indemnités de sinistre"
                   ].map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-3 text-sm text-slate-700 font-medium">
-                      <div className="bg-[#D4AF37] text-slate-950 p-0.5 rounded-full shrink-0">
+                    <li key={idx} className="flex items-center gap-3 text-sm text-slate-300 font-medium">
+                      <div className="bg-primary text-primary-foreground p-0.5 rounded-full shrink-0">
                         <Check className="h-3.5 w-3.5" />
                       </div>
                       {item}
@@ -387,13 +387,13 @@ export default function Home() {
                   return (
                     <div
                       key={idx}
-                      className="glass-card p-6.5 rounded-2xl hover:border-[#D4AF37]/35 transition-all duration-300"
+                      className="glass-card p-6.5 rounded-2xl hover:border-primary/30 transition-all duration-300"
                     >
-                      <div className="bg-[#D4AF37]/10 text-[#AA7C11] p-3 rounded-xl inline-flex mb-4">
+                      <div className="bg-primary/10 text-primary p-3 rounded-xl inline-flex mb-4">
                         <Icon className="h-5 w-5" />
                       </div>
-                      <h3 className="font-bold text-slate-900 mb-2">{feature.title}</h3>
-                      <p className="text-slate-600 text-sm leading-relaxed font-light">{feature.description}</p>
+                      <h3 className="font-bold text-white mb-2">{feature.title}</h3>
+                      <p className="text-slate-400 text-sm leading-relaxed font-light">{feature.description}</p>
                     </div>
                   );
                 })}
@@ -403,14 +403,14 @@ export default function Home() {
         </section>
 
         {/* Testimonials Section */}
-        <section id="testimonials" className="py-24 sm:py-32 bg-slate-50 border-y border-slate-200">
+        <section id="testimonials" className="py-24 sm:py-32 bg-slate-950/40 border-y border-primary/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
-              <h2 className="text-sm font-bold text-[#AA7C11] uppercase tracking-widest">Témoignages Clients</h2>
-              <p className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-sm font-bold text-primary uppercase tracking-widest">Témoignages Clients</h2>
+              <p className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 Ils nous font confiance
               </p>
-              <p className="text-slate-600 leading-relaxed font-light">
+              <p className="text-slate-400 leading-relaxed font-light">
                 Découvrez les retours d'expérience de nos assurés quant à la qualité de notre accompagnement et la rapidité de gestion de leurs garanties.
               </p>
             </div>
@@ -419,22 +419,22 @@ export default function Home() {
               {testimonials.map((t, idx) => (
                 <div
                   key={idx}
-                  className="glass-card p-8 rounded-2xl flex flex-col justify-between relative hover:border-[#D4AF37]/35 transition-all duration-300"
+                  className="glass-card p-8 rounded-2xl flex flex-col justify-between relative hover:border-primary/35 transition-all duration-300"
                 >
                   <div className="space-y-5">
                     {/* Stars */}
-                    <div className="flex gap-1 text-[#D4AF37]">
+                    <div className="flex gap-1 text-primary">
                       {[...Array(t.rating)].map((_, i) => (
                         <Star key={i} className="h-4.5 w-4.5 fill-current" />
                       ))}
                     </div>
-                    <p className="text-slate-700 italic text-sm leading-relaxed font-light">
+                    <p className="text-slate-300 italic text-sm leading-relaxed font-light">
                       "{t.quote}"
                     </p>
                   </div>
-                  <div className="border-t border-slate-200 mt-6 pt-5 flex flex-col">
-                    <span className="font-bold text-slate-900 text-sm">{t.author}</span>
-                    <span className="text-xs text-slate-500 mt-1">{t.role}</span>
+                  <div className="border-t border-primary/10 mt-6 pt-5 flex flex-col">
+                    <span className="font-bold text-white text-sm">{t.author}</span>
+                    <span className="text-xs text-slate-400 mt-1">{t.role}</span>
                   </div>
                 </div>
               ))}
@@ -443,21 +443,21 @@ export default function Home() {
         </section>
 
         {/* CTA Bottom Banner */}
-        <section className="bg-slate-50 text-slate-900 py-20 sm:py-24 relative overflow-hidden border-t border-slate-200">
-          <div className="absolute inset-0 bg-[#D4AF37]/5 pointer-events-none" />
+        <section className="bg-slate-950 text-white py-20 sm:py-24 relative overflow-hidden border-t border-primary/15">
+          <div className="absolute inset-0 bg-primary/5 [mask-image:radial-gradient(circle_at_bottom_right,#000_30%,transparent_100%)] pointer-events-none" />
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 relative z-10">
-            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-slate-900">
+            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-gold-gradient">
               Prêt à sécuriser votre avenir avec sérénité ?
             </h2>
-            <p className="text-slate-600 max-w-xl mx-auto text-base sm:text-lg font-light">
+            <p className="text-slate-300 max-w-xl mx-auto text-base sm:text-lg font-light">
               Définissez vos garanties personnalisées en 2 minutes en ligne ou contactez un conseiller expert pour une étude patrimoniale complète.
             </p>
             <div className="pt-4">
               <Button
                 onClick={() => handleOpenModal()}
-                className="bg-[#D4AF37] hover:bg-[#c39e2e] text-slate-950 font-bold py-5 px-9 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 inline-flex items-center gap-2 border border-[#D4AF37]/20 cursor-pointer"
+                className="bg-gold-gradient hover:opacity-90 text-primary-foreground font-bold py-5 px-9 rounded-xl shadow-lg shadow-primary/15 transition-all duration-300 inline-flex items-center gap-2 border border-primary/20 cursor-pointer"
               >
-                Obtenir mon devis
+                Demander mon devis maintenant
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </div>
