@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -47,36 +47,36 @@ const trottinetteSchema = z.object({
 
 type TrottinetteFormData = z.infer<typeof trottinetteSchema>;
 
-// Zod Schema Path B: Automobile / Moto (Enhanced with permit category and CRM range)
+// Zod Schema Path B: Automobile / Moto
 const autoMotoSchema = z.object({
+  nom: z.string({ message: "Le nom complet est requis." }).min(1, "Le nom complet est requis."),
+  email: z.string({ message: "L'adresse e-mail est requise." }).email("Adresse e-mail invalide."),
+  telephone: z.string({ message: "Le numéro de téléphone est requis." }).min(8, "Le numéro de téléphone doit être valide."),
   immatriculation: z
     .string({ message: "Le numéro d'immatriculation est requis." })
     .min(1, "Le numéro d'immatriculation est requis.")
     .regex(/^[A-Z]{2}-\d{3}-[A-Z]{2}$/i, "Format d'immatriculation invalide. Exemple: AA-123-AA"),
-  nom: z.string({ message: "Le nom complet est requis." }).min(1, "Le nom complet est requis."),
-  datePermis: z.string({ message: "La date d'obtention du permis est requise." }).min(1, "La date d'obtention du permis est requise."),
+  datePermis: z.string({ message: "La date d'obtention du permis est requise." }).regex(/^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/(19|20)\d\d$/, "Format invalide (JJ/MM/AAAA)"),
   categoriePermis: z.string({ message: "La catégorie du permis est requise." }).min(1, "La catégorie du permis est requise."),
-  email: z.string({ message: "L'adresse e-mail est requise." }).email("Adresse e-mail invalide."),
-  telephone: z.string({ message: "Le numéro de téléphone est requis." }).min(8, "Le numéro de téléphone doit être valide."),
   dejaAssure: z.enum(["Oui", "Non"], {
     message: "Veuillez indiquer si vous avez été assuré au cours des 3 dernières années.",
   }),
-  moisAssurance: z.string().optional(),
+  periodeAssurance: z.string().optional(),
   crm: z
     .string({ message: "Le coefficient CRM (Bonus-Malus) est requis." })
     .min(1, "Le coefficient CRM est requis.")
     .refine((val) => {
       const num = parseFloat(val);
-      return !isNaN(num) && num >= 0.50 && num <= 5.00;
+      return !isNaN(num) && num >= 0.5 && num <= 5.0;
     }, { message: "Le CRM doit être compris entre 0.50 et 5.00." }),
 }).refine((data) => {
-  if (data.dejaAssure === "Oui" && (!data.moisAssurance || data.moisAssurance.trim() === "")) {
+  if (data.dejaAssure === "Oui" && (!data.periodeAssurance || data.periodeAssurance.trim() === "")) {
     return false;
   }
   return true;
 }, {
-  message: "Le nombre de mois d'assurance est requis.",
-  path: ["moisAssurance"],
+  message: "La période d'assurance est requise.",
+  path: ["periodeAssurance"],
 });
 
 type AutoMotoFormData = z.infer<typeof autoMotoSchema>;
@@ -128,50 +128,48 @@ const choices: InsuranceChoice[] = [
     title: "Trottinette Électrique",
     description: "Garanties responsabilité civile, vol et dommages pour vos trajets urbains quotidiens.",
     icon: ScooterIcon,
-    iconColor: "text-[#AA7C11]",
+    iconColor: "text-[#D4AF37]",
   },
   {
     id: "auto",
     title: "Automobile",
     description: "Des formules Tous Risques ou au Tiers personnalisées pour vos véhicules de prestige ou du quotidien.",
     icon: Car,
-    iconColor: "text-[#AA7C11]",
+    iconColor: "text-[#D4AF37]",
   },
   {
     id: "moto",
     title: "Moto",
     description: "Garanties conducteur, dommages et vol adaptées pour tous les motards and cylindrées.",
     icon: MotoIcon,
-    iconColor: "text-[#AA7C11]",
+    iconColor: "text-[#D4AF37]",
   },
 ];
 
 // Formatting helper for registration plate AA-123-AA
 const formatImmatriculation = (val: string): string => {
   const cleaned = val.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+
+  const lettersPart = cleaned.slice(0, 2).replace(/[^A-Z]/g, "");
+  const numbersPart = cleaned.slice(2, 5).replace(/[^0-9]/g, "");
+  const secondLettersPart = cleaned.slice(5, 7).replace(/[^A-Z]/g, "");
+
+  let formatted = lettersPart;
+  if (numbersPart) formatted += `-${numbersPart}`;
+  if (secondLettersPart) formatted += `-${secondLettersPart}`;
+
+  return formatted;
+};
+
+// Formatting helper for date DD/MM/YYYY
+const formatDate = (val: string): string => {
+  const cleaned = val.replace(/\D/g, "");
   let formatted = "";
-  
-  for (let i = 0; i < cleaned.length && i < 7; i++) {
-    const char = cleaned[i];
-    if (i < 2) {
-      if (/[A-Z]/.test(char)) {
-        formatted += char;
-      }
-    } else if (i < 5) {
-      if (/[0-9]/.test(char)) {
-        if (i === 2 && formatted.length === 2) {
-          formatted += "-";
-        }
-        formatted += char;
-      }
-    } else {
-      if (/[A-Z]/.test(char)) {
-        if (i === 5 && formatted.length === 6) {
-          formatted += "-";
-        }
-        formatted += char;
-      }
+  for (let i = 0; i < cleaned.length && i < 8; i++) {
+    if (i === 2 || i === 4) {
+      formatted += "/";
     }
+    formatted += cleaned[i];
   }
   return formatted;
 };
@@ -189,6 +187,76 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
   const [callDuration, setCallDuration] = useState<"15min" | "30min" | null>(null);
   const [appointmentDate, setAppointmentDate] = useState("");
 
+  // Month Grid Range States
+  const [rangeStart, setRangeStart] = useState<{ year: number; monthIndex: number } | null>(null);
+  const [rangeEnd, setRangeEnd] = useState<{ year: number; monthIndex: number } | null>(null);
+
+  const years = [2023, 2024, 2025, 2026];
+  const monthsAbbr = ["Janv", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+  const isMonthDisabled = (year: number, monthIndex: number): boolean => {
+    if (year === 2023 && monthIndex < 5) return true; // Before June 2023
+    if (year === 2026 && monthIndex > 5) return true; // After June 2026
+    return false;
+  };
+
+  const handleMonthClick = (year: number, monthIndex: number) => {
+    if (isMonthDisabled(year, monthIndex)) return;
+
+    if (!rangeStart || (rangeStart && rangeEnd)) {
+      // First click or reset
+      setRangeStart({ year, monthIndex });
+      setRangeEnd(null);
+    } else {
+      // Second click
+      const startVal = rangeStart.year * 12 + rangeStart.monthIndex;
+      const currentVal = year * 12 + monthIndex;
+      if (currentVal >= startVal) {
+        setRangeEnd({ year, monthIndex });
+      } else {
+        // Treat as new start if clicked before start month
+        setRangeStart({ year, monthIndex });
+        setRangeEnd(null);
+      }
+    }
+  };
+
+  const isMonthSelected = (year: number, monthIndex: number): boolean => {
+    if (!rangeStart) return false;
+    const val = year * 12 + monthIndex;
+    const startVal = rangeStart.year * 12 + rangeStart.monthIndex;
+    if (!rangeEnd) {
+      return val === startVal;
+    }
+    const endVal = rangeEnd.year * 12 + rangeEnd.monthIndex;
+    return val >= startVal && val <= endVal && !isMonthDisabled(year, monthIndex);
+  };
+
+  const getSelectedMonthsCount = (): number => {
+    if (!rangeStart) return 0;
+    const startVal = rangeStart.year * 12 + rangeStart.monthIndex;
+    if (!rangeEnd) return 1;
+    const endVal = rangeEnd.year * 12 + rangeEnd.monthIndex;
+
+    let count = 0;
+    years.forEach((y) => {
+      monthsAbbr.forEach((_, m) => {
+        if (!isMonthDisabled(y, m)) {
+          const val = y * 12 + m;
+          if (val >= startVal && val <= endVal) {
+            count++;
+          }
+        }
+      });
+    });
+    return count;
+  };
+
+  const selectAllPeriod = () => {
+    setRangeStart({ year: 2023, monthIndex: 5 }); // June 2023
+    setRangeEnd({ year: 2026, monthIndex: 5 });   // June 2026
+  };
+
   // Path A Form
   const trottinetteForm = useForm<TrottinetteFormData>({
     resolver: zodResolver(trottinetteSchema),
@@ -205,15 +273,15 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
   const autoMotoForm = useForm<AutoMotoFormData>({
     resolver: zodResolver(autoMotoSchema),
     defaultValues: {
-      immatriculation: "",
       nom: "",
-      datePermis: "",
-      categoriePermis: "",
       email: "",
       telephone: "",
+      immatriculation: "",
+      datePermis: "",
+      categoriePermis: "",
       dejaAssure: undefined,
-      moisAssurance: "",
-      crm: "",
+      periodeAssurance: "",
+      crm: "1.00",
     },
   });
 
@@ -248,6 +316,8 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
       setIsConfirmed(false);
       setCallDuration(null);
       setAppointmentDate("");
+      setRangeStart(null);
+      setRangeEnd(null);
       trottinetteForm.reset();
       autoMotoForm.reset();
       setError(null);
@@ -300,15 +370,15 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
 
     try {
       const payload = {
-        immatriculation: data.immatriculation,
         nom: data.nom,
-        datePermis: data.datePermis,
-        categoriePermis: data.categoriePermis,
         email: data.email,
         telephone: data.telephone,
+        immatriculation: data.immatriculation,
+        datePermis: data.datePermis,
+        categoriePermis: data.categoriePermis,
         assuranceType: selectedChoice.title,
         dejaAssure: data.dejaAssure,
-        moisAssurance: data.dejaAssure === "Oui" ? data.moisAssurance : undefined,
+        periodeAssurance: data.dejaAssure === "Oui" ? data.periodeAssurance : undefined,
         crm: data.crm,
       };
 
@@ -334,10 +404,30 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
     }
   };
 
-  // Setup registration plate masking onChange handler
   const { onChange: onImmatriculationChange, ...immatriculationRest } = autoMotoForm.register("immatriculation");
+  const { onChange: onDatePermisChange, ...datePermisRest } = autoMotoForm.register("datePermis");
 
-  // Handle appointment confirmation
+  const dejaAssureVal = autoMotoForm.watch("dejaAssure");
+
+  useEffect(() => {
+    if (dejaAssureVal === "Non") {
+      setRangeStart(null);
+      setRangeEnd(null);
+      autoMotoForm.setValue("crm", "1.00");
+    }
+  }, [dejaAssureVal, autoMotoForm]);
+
+  const selectedMonthsCount = getSelectedMonthsCount();
+  const isRangeSelected = rangeStart !== null && rangeEnd !== null;
+
+  useEffect(() => {
+    if (dejaAssureVal === "Oui") {
+      autoMotoForm.setValue("periodeAssurance", selectedMonthsCount > 0 ? `${selectedMonthsCount} mois` : "");
+    } else {
+      autoMotoForm.setValue("periodeAssurance", "");
+    }
+  }, [selectedMonthsCount, dejaAssureVal, autoMotoForm]);
+
   const handleConfirmAppointment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!callDuration && !appointmentDate) {
@@ -346,14 +436,13 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
     }
     setError(null);
 
-    // Console logging booking details
     console.log("----------------------------------------");
     console.log("📅 RDV CONFIRMÉ (SBA CONSEIL) !");
     console.log(`Prospect :          ${submittedInfo?.nom}`);
     console.log(`Email :             ${submittedInfo?.email}`);
     console.log(`Téléphone :         ${submittedInfo?.telephone}`);
     console.log(`Type d'assurance :  ${selectedChoice?.title}`);
-    
+
     if (callDuration) {
       console.log(`Type de rappel :    Appel immédiat`);
       console.log(`Durée de l'appel :  ${callDuration === "15min" ? "15 minutes" : "30 minutes"}`);
@@ -366,16 +455,15 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
     setIsConfirmed(true);
   };
 
-  // Mutex handlers for Scheduling
   const handleSelectDuration = (duration: "15min" | "30min") => {
     setCallDuration(duration);
-    setAppointmentDate(""); // Clears date/time picker
+    setAppointmentDate(""); 
     setError(null);
   };
 
   const handleSelectDate = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAppointmentDate(e.target.value);
-    setCallDuration(null); // Clears immediate call duration
+    setCallDuration(null); 
     setError(null);
   };
 
@@ -383,15 +471,13 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
     ? new Date(appointmentDate).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })
     : "";
 
-  const dejaAssureVal = autoMotoForm.watch("dejaAssure");
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : handleClose())}>
       <DialogContent className="sm:max-w-2xl bg-white border border-slate-200 p-6 sm:p-8 rounded-2xl overflow-y-auto max-h-[90vh] shadow-2xl">
         {step === 1 && (
           <div className="space-y-6">
             <DialogHeader className="text-center sm:text-left">
-              <DialogTitle className="text-2xl font-bold text-slate-900">
+              <DialogTitle className="text-2xl font-bold text-[#0B132B]">
                 Choisissez votre assurance
               </DialogTitle>
               <DialogDescription className="text-slate-500 mt-1">
@@ -408,11 +494,11 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                     onClick={() => handleChoiceSelect(choice)}
                     className="flex items-start gap-4 p-4.5 text-left rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#D4AF37]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#D4AF37]/5 hover:-translate-y-0.5 group cursor-pointer"
                   >
-                    <div className="p-3.5 rounded-xl bg-[#D4AF37]/10 text-[#AA7C11] shrink-0 group-hover:scale-110 transition-transform duration-300">
+                    <div className="p-3.5 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] shrink-0 group-hover:scale-110 transition-transform duration-300">
                       <IconComponent className="h-6 w-6" />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="font-semibold text-slate-900 text-base group-hover:text-[#AA7C11] transition-colors">
+                      <h4 className="font-semibold text-[#0B132B] text-base group-hover:text-[#D4AF37] transition-colors">
                         {choice.title}
                       </h4>
                       <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">
@@ -428,7 +514,6 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
 
         {step === 2 && selectedChoice && (
           <div className="space-y-6">
-            {/* Header section (conditional on state) */}
             <div className="flex items-center gap-3">
               {!isConfirmed && (
                 <Button
@@ -442,7 +527,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                 </Button>
               )}
               <DialogHeader className="flex-1">
-                <DialogTitle className="text-2xl font-bold text-slate-900">
+                <DialogTitle className="text-2xl font-bold text-[#0B132B]">
                   {isConfirmed
                     ? "Rendez-vous confirmé !"
                     : isSubmitted
@@ -459,9 +544,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
               </DialogHeader>
             </div>
 
-            {/* Content rendering based on states */}
             {!isSubmitted ? (
-              /* LEAD FORMS VIEW */
               <>
                 {error && (
                   <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
@@ -470,18 +553,17 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                 )}
 
                 {selectedChoice.id === "trottinette" ? (
-                  /* PATH A: Trottinette */
-                  <form onSubmit={trottinetteForm.handleSubmit(onTrottinetteSubmit)} className="space-y-5">
+                  <form onSubmit={trottinetteForm.handleSubmit(onTrottinetteSubmit)} className="space-y-5 w-full max-w-full overflow-hidden px-2 sm:px-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="nom-t" className="text-sm font-medium text-slate-700">
+                        <Label htmlFor="nom-t" className="text-sm font-semibold text-[#0B132B]">
                           Nom complet *
                         </Label>
                         <Input
                           id="nom-t"
                           placeholder="Jean Dupont"
                           {...trottinetteForm.register("nom")}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                         />
                         {trottinetteForm.formState.errors.nom && (
                           <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.nom.message}</p>
@@ -489,7 +571,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="email-t" className="text-sm font-medium text-slate-700">
+                        <Label htmlFor="email-t" className="text-sm font-semibold text-[#0B132B]">
                           Adresse E-mail *
                         </Label>
                         <Input
@@ -497,7 +579,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                           type="email"
                           placeholder="jean.dupont@exemple.com"
                           {...trottinetteForm.register("email")}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                         />
                         {trottinetteForm.formState.errors.email && (
                           <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.email.message}</p>
@@ -507,7 +589,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="age-t" className="text-sm font-medium text-slate-700">
+                        <Label htmlFor="age-t" className="text-sm font-semibold text-[#0B132B]">
                           Âge *
                         </Label>
                         <Input
@@ -515,7 +597,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                           type="number"
                           placeholder="28"
                           {...trottinetteForm.register("age")}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                         />
                         {trottinetteForm.formState.errors.age && (
                           <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.age.message}</p>
@@ -523,7 +605,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="codePostal-t" className="text-sm font-medium text-slate-700">
+                        <Label htmlFor="codePostal-t" className="text-sm font-semibold text-[#0B132B]">
                           Code postal *
                         </Label>
                         <Input
@@ -531,7 +613,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                           placeholder="75002"
                           maxLength={5}
                           {...trottinetteForm.register("codePostal")}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                         />
                         {trottinetteForm.formState.errors.codePostal && (
                           <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.codePostal.message}</p>
@@ -540,14 +622,14 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="telephone-t" className="text-sm font-medium text-slate-700">
+                      <Label htmlFor="telephone-t" className="text-sm font-semibold text-[#0B132B]">
                         Numéro de téléphone *
                       </Label>
                       <Input
                         id="telephone-t"
                         placeholder="+33 6 12 34 56 78"
                         {...trottinetteForm.register("telephone")}
-                        className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                       />
                       {trottinetteForm.formState.errors.telephone && (
                         <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.telephone.message}</p>
@@ -567,7 +649,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-[#D4AF37] hover:bg-[#c39e2e] text-slate-950 font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
+                        className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
                       >
                         {isSubmitting ? (
                           <>
@@ -584,168 +666,155 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                     </div>
                   </form>
                 ) : (
-                  /* PATH B: Automobile / Moto */
-                  <form onSubmit={autoMotoForm.handleSubmit(onAutoMotoSubmit)} className="space-y-5">
+                  <form onSubmit={autoMotoForm.handleSubmit(onAutoMotoSubmit)} className="space-y-5 w-full max-w-full overflow-hidden px-2 sm:px-4">
+                    {/* 1. Numéro d'immatriculation */}
+                    <div className="space-y-2">
+                      <Label htmlFor="immatriculation-am" className="text-sm font-semibold text-[#0B132B]">
+                        Numéro d'immatriculation *
+                      </Label>
+                      <Input
+                        id="immatriculation-am"
+                        placeholder="AA-123-AA"
+                        maxLength={9}
+                        onChange={(e) => {
+                          const formatted = formatImmatriculation(e.target.value);
+                          e.target.value = formatted;
+                          onImmatriculationChange(e);
+                        }}
+                        {...immatriculationRest}
+                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 uppercase tracking-wider"
+                      />
+                      {autoMotoForm.formState.errors.immatriculation && (
+                        <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.immatriculation.message}</p>
+                      )}
+                    </div>
+
+                    {/* 2. Nom complet */}
+                    <div className="space-y-2">
+                      <Label htmlFor="nom-am" className="text-sm font-semibold text-[#0B132B]">
+                        Nom complet *
+                      </Label>
+                      <Input
+                        id="nom-am"
+                        placeholder="Jean Dupont"
+                        {...autoMotoForm.register("nom")}
+                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                      />
+                      {autoMotoForm.formState.errors.nom && (
+                        <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.nom.message}</p>
+                      )}
+                    </div>
+
+                    {/* 3. Date d'obtention / Catégorie permis row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="immatriculation-am" className="text-sm font-medium text-slate-700">
-                          Numéro d'immatriculation *
+                        <Label htmlFor="datePermis-am" className="text-sm font-semibold text-[#0B132B]">
+                          Date d'obtention *
                         </Label>
                         <Input
-                          id="immatriculation-am"
-                          placeholder="AA-123-AA"
-                          maxLength={9}
+                          id="datePermis-am"
+                          type="text"
+                          placeholder="DD/MM/YYYY"
+                          maxLength={10}
                           onChange={(e) => {
-                            const formatted = formatImmatriculation(e.target.value);
+                            const formatted = formatDate(e.target.value);
                             e.target.value = formatted;
-                            onImmatriculationChange(e);
+                            onDatePermisChange(e);
                           }}
-                          {...immatriculationRest}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 uppercase tracking-wider py-5"
+                          {...datePermisRest}
+                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                         />
-                        {autoMotoForm.formState.errors.immatriculation && (
-                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.immatriculation.message}</p>
+                        {autoMotoForm.formState.errors.datePermis && (
+                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.datePermis.message}</p>
                         )}
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="crm-am" className="text-sm font-medium text-slate-700">
-                          CRM (Bonus/Malus) *
+                        <Label htmlFor="categoriePermis-am" className="text-sm font-semibold text-[#0B132B]">
+                          Catégorie permis *
                         </Label>
-                        <Input
-                          id="crm-am"
-                          type="number"
-                          min="0.50"
-                          max="5.00"
-                          step="0.01"
-                          placeholder="0.68"
-                          {...autoMotoForm.register("crm")}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                        />
-                        {autoMotoForm.formState.errors.crm && (
-                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.crm.message}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="nom-am" className="text-sm font-medium text-slate-700">
-                          Nom complet *
-                        </Label>
-                        <Input
-                          id="nom-am"
-                          placeholder="Jean Dupont"
-                          {...autoMotoForm.register("nom")}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                        />
-                        {autoMotoForm.formState.errors.nom && (
-                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.nom.message}</p>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="datePermis-am" className="text-sm font-medium text-slate-700">
-                            Date d'obtention *
-                          </Label>
-                          <Input
-                            id="datePermis-am"
-                            type="date"
-                            {...autoMotoForm.register("datePermis")}
-                            className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                          />
-                          {autoMotoForm.formState.errors.datePermis && (
-                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.datePermis.message}</p>
+                        <select
+                          id="categoriePermis-am"
+                          {...autoMotoForm.register("categoriePermis")}
+                          className="w-full box-border h-12 text-base rounded-xl border border-slate-200 bg-slate-50 px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none transition-colors"
+                        >
+                          <option value="">Permis...</option>
+                          {selectedChoice.id === "auto" ? (
+                            <>
+                              <option value="B">B</option>
+                              <option value="B1">B1</option>
+                              <option value="BE">BE</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="A">A</option>
+                              <option value="AM">AM</option>
+                              <option value="A1">A1</option>
+                              <option value="A2">A2</option>
+                            </>
                           )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="categoriePermis-am" className="text-sm font-medium text-slate-700">
-                            Catégorie permis *
-                          </Label>
-                          <select
-                            id="categoriePermis-am"
-                            {...autoMotoForm.register("categoriePermis")}
-                            className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none"
-                          >
-                            <option value="">Permis...</option>
-                            {selectedChoice.id === "auto" ? (
-                              <>
-                                <option value="B">B</option>
-                                <option value="B1">B1</option>
-                                <option value="BE">BE</option>
-                              </>
-                            ) : (
-                              <>
-                                <option value="A">A</option>
-                                <option value="AM">AM</option>
-                                <option value="A1">A1</option>
-                                <option value="A2">A2</option>
-                              </>
-                            )}
-                          </select>
-                          {autoMotoForm.formState.errors.categoriePermis && (
-                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.categoriePermis.message}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="email-am" className="text-sm font-medium text-slate-700">
-                          Adresse E-mail *
-                        </Label>
-                        <Input
-                          id="email-am"
-                          type="email"
-                          placeholder="jean.dupont@exemple.com"
-                          {...autoMotoForm.register("email")}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                        />
-                        {autoMotoForm.formState.errors.email && (
-                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.email.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="telephone-am" className="text-sm font-medium text-slate-700">
-                          Numéro de téléphone *
-                        </Label>
-                        <Input
-                          id="telephone-am"
-                          placeholder="+33 6 12 34 56 78"
-                          {...autoMotoForm.register("telephone")}
-                          className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                        />
-                        {autoMotoForm.formState.errors.telephone && (
-                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.telephone.message}</p>
+                        </select>
+                        {autoMotoForm.formState.errors.categoriePermis && (
+                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.categoriePermis.message}</p>
                         )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* 4. Adresse E-mail */}
+                    <div className="space-y-2">
+                      <Label htmlFor="email-am" className="text-sm font-semibold text-[#0B132B]">
+                        Adresse E-mail *
+                      </Label>
+                      <Input
+                        id="email-am"
+                        type="email"
+                        placeholder="jean.dupont@exemple.com"
+                        {...autoMotoForm.register("email")}
+                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                      />
+                      {autoMotoForm.formState.errors.email && (
+                        <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.email.message}</p>
+                      )}
+                    </div>
+
+                    {/* 5. Numéro de téléphone */}
+                    <div className="space-y-2">
+                      <Label htmlFor="telephone-am" className="text-sm font-semibold text-[#0B132B]">
+                        Numéro de téléphone *
+                      </Label>
+                      <Input
+                        id="telephone-am"
+                        placeholder="+33 6 12 34 56 78"
+                        {...autoMotoForm.register("telephone")}
+                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                      />
+                      {autoMotoForm.formState.errors.telephone && (
+                        <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.telephone.message}</p>
+                      )}
+                    </div>
+
+                    {/* 6. Question: "Avez-vous été assuré au cours des 3 dernières années ?" */}
+                    <div className="space-y-4 pt-2 border-t border-slate-100">
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-slate-700">
+                        <Label className="text-sm font-semibold text-[#0B132B]">
                           Avez-vous été assuré au cours des 3 dernières années ? *
                         </Label>
-                        <div className="flex gap-4 mt-1.5">
-                          <label className="flex items-center gap-2 text-sm text-slate-900 cursor-pointer">
+                        <div className="flex gap-6 mt-1.5">
+                          <label className="flex items-center gap-2 text-sm font-medium text-[#0B132B] cursor-pointer">
                             <input
                               type="radio"
                               value="Oui"
                               {...autoMotoForm.register("dejaAssure")}
-                              className="h-4 w-4 border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37]"
+                              className="h-5 w-5 border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
                             />
                             Oui
                           </label>
-                          <label className="flex items-center gap-2 text-sm text-slate-900 cursor-pointer">
+                          <label className="flex items-center gap-2 text-sm font-medium text-[#0B132B] cursor-pointer">
                             <input
                               type="radio"
                               value="Non"
                               {...autoMotoForm.register("dejaAssure")}
-                              className="h-4 w-4 border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37]"
+                              className="h-5 w-5 border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
                             />
                             Non
                           </label>
@@ -756,19 +825,79 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                       </div>
 
                       {dejaAssureVal === "Oui" && (
-                        <div className="space-y-2">
-                          <Label htmlFor="moisAssurance-am" className="text-sm font-medium text-slate-700">
-                            Nombre de mois d'assurance *
-                          </Label>
-                          <Input
-                            id="moisAssurance-am"
-                            type="number"
-                            placeholder="24"
-                            {...autoMotoForm.register("moisAssurance")}
-                            className="rounded-xl border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                          />
-                          {autoMotoForm.formState.errors.moisAssurance && (
-                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.moisAssurance.message}</p>
+                        <div className="space-y-4 border border-slate-200 rounded-2xl p-4 bg-slate-50/50 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <span className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
+                              SÉLECTIONNEZ LA RÉPARTITION DES PÉRIODES D'ASSURANCE DEPUIS LE 07/06/2023
+                            </span>
+                            <button
+                              type="button"
+                              onClick={selectAllPeriod}
+                              className="text-xs font-semibold text-[#D4AF37] hover:text-[#c39e2e] transition-colors self-start sm:self-auto"
+                            >
+                              Sélectionner toute la période
+                            </button>
+                          </div>
+
+                          {/* Month selector grid */}
+                          <div className="space-y-3">
+                            {years.map((year) => (
+                              <div key={year} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="w-12 text-sm font-bold text-[#0B132B] shrink-0">{year}</span>
+                                <div className="grid grid-cols-4 sm:grid-cols-12 gap-1.5 flex-1">
+                                  {monthsAbbr.map((month, mIdx) => {
+                                    const isDisabled = isMonthDisabled(year, mIdx);
+                                    const isSelected = isMonthSelected(year, mIdx);
+                                    return (
+                                      <button
+                                        key={month}
+                                        type="button"
+                                        disabled={isDisabled}
+                                        onClick={() => handleMonthClick(year, mIdx)}
+                                        className={`border rounded-lg text-xs font-medium py-1.5 text-center transition-all cursor-pointer ${
+                                          isDisabled
+                                            ? "bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200"
+                                            : isSelected
+                                            ? "bg-[#D4AF37] text-white border-[#D4AF37] font-semibold shadow-sm"
+                                            : "bg-white text-[#0B132B] border-slate-200 hover:bg-slate-50 hover:border-[#D4AF37]/50"
+                                        }`}
+                                      >
+                                        {month}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex justify-between items-center pt-2 text-sm font-semibold text-[#0B132B]">
+                            <span>Total des périodes d'assurance : {selectedMonthsCount} mois</span>
+                          </div>
+                          {autoMotoForm.formState.errors.periodeAssurance && (
+                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.periodeAssurance.message}</p>
+                          )}
+
+                          {/* Conditional CRM field rendering below the counter */}
+                          {isRangeSelected && (
+                            <div className="space-y-2 pt-4 border-t border-slate-200 animate-in fade-in slide-in-from-top-2 duration-300">
+                              <Label htmlFor="crm-am" className="text-sm font-semibold text-[#0B132B]">
+                                CRM (Bonus/Malus) *
+                              </Label>
+                              <Input
+                                id="crm-am"
+                                type="number"
+                                min="0.50"
+                                max="5.00"
+                                step="0.01"
+                                placeholder="1.00"
+                                {...autoMotoForm.register("crm")}
+                                className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                              />
+                              {autoMotoForm.formState.errors.crm && (
+                                <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.crm.message}</p>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
@@ -787,7 +916,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-[#D4AF37] hover:bg-[#c39e2e] text-slate-950 font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
+                        className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
                       >
                         {isSubmitting ? (
                           <>
@@ -806,25 +935,25 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                 )}
               </>
             ) : !isConfirmed ? (
-              /* RESTURCTURED SPLIT SCHEDULING APPOINTMENT VIEW */
-              <form onSubmit={handleConfirmAppointment} className="space-y-6">
+              <form onSubmit={handleConfirmAppointment} className="space-y-6 w-full max-w-full overflow-hidden px-2 sm:px-4">
                 {error && (
                   <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
                     {error}
                   </div>
                 )}
 
-                {/* Path A: Appel Immédiat */}
                 <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                  <Label className="text-sm font-semibold text-slate-900">Être rappelé rapidement (Appel immédiat)</Label>
+                  <Label className="text-sm font-semibold text-[#0B132B]">
+                    Être rappelé rapidement (Appel immédiat)
+                  </Label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => handleSelectDuration("15min")}
                       className={`py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
                         callDuration === "15min"
-                          ? "bg-[#D4AF37] text-slate-950 border border-[#D4AF37] shadow-md shadow-[#D4AF37]/10"
-                          : "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50"
+                          ? "bg-[#D4AF37] text-white border border-[#D4AF37] shadow-md shadow-[#D4AF37]/20"
+                          : "bg-white text-[#0B132B] border border-slate-200 hover:bg-slate-50"
                       }`}
                     >
                       15 min
@@ -834,8 +963,8 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                       onClick={() => handleSelectDuration("30min")}
                       className={`py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
                         callDuration === "30min"
-                          ? "bg-[#D4AF37] text-slate-950 border border-[#D4AF37] shadow-md shadow-[#D4AF37]/10"
-                          : "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50"
+                          ? "bg-[#D4AF37] text-white border border-[#D4AF37] shadow-md shadow-[#D4AF37]/20"
+                          : "bg-white text-[#0B132B] border border-slate-200 hover:bg-slate-50"
                       }`}
                     >
                       30 min
@@ -843,9 +972,8 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                   </div>
                 </div>
 
-                {/* Path B: Planifier plus tard */}
                 <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                  <Label htmlFor="appointment-date" className="text-sm font-semibold text-slate-900">
+                  <Label htmlFor="appointment-date" className="text-sm font-semibold text-[#0B132B]">
                     Ou choisir une date ultérieure
                   </Label>
                   <input
@@ -853,7 +981,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                     type="datetime-local"
                     value={appointmentDate}
                     onChange={handleSelectDate}
-                    className="w-full bg-white border border-slate-300 text-slate-900 px-4 py-3.5 rounded-xl focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-base"
+                    className="w-full bg-white border border-slate-300 text-[#0B132B] px-4 py-3.5 rounded-xl focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-base h-12"
                   />
                 </div>
 
@@ -861,7 +989,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                   <Button
                     variant="ghost"
                     onClick={() => setIsSubmitted(false)}
-                    className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl px-5"
+                    className="text-slate-500 hover:text-[#0B132B] hover:bg-slate-100 rounded-xl px-5"
                     type="button"
                   >
                     <ArrowLeft className="h-5 w-5 mr-2" />
@@ -869,30 +997,29 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                   </Button>
                   <Button
                     type="submit"
-                    className="bg-[#D4AF37] hover:bg-[#c39e2e] text-slate-950 font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer"
+                    className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer"
                   >
                     Confirmer le rendez-vous
                   </Button>
                 </div>
               </form>
             ) : (
-              /* APPOINTMENT CONFIRMED SUCCESS VIEW */
-              <div className="flex flex-col items-center justify-center py-6 text-center space-y-6">
-                <div className="bg-[#D4AF37]/10 p-4 rounded-full text-[#AA7C11] animate-bounce">
+              <div className="flex flex-col items-center justify-center py-6 text-center space-y-6 w-full max-w-full overflow-hidden px-2 sm:px-4">
+                <div className="bg-[#D4AF37]/10 p-4 rounded-full text-[#D4AF37] animate-bounce">
                   <CheckCircle className="h-16 w-16" />
                 </div>
 
                 <div className="space-y-2 max-w-md">
-                  <DialogTitle className="text-2xl font-bold text-slate-900">
+                  <DialogTitle className="text-2xl font-bold text-[#0B132B]">
                     Rendez-vous confirmé. À très vite !
                   </DialogTitle>
                   <DialogDescription className="text-slate-600 leading-relaxed text-sm">
-                    Merci <span className="font-semibold text-slate-950">{submittedInfo?.nom}</span>. Votre demande de devis pour l'assurance <span className="font-semibold text-[#AA7C11]">{selectedChoice.title}</span> est pré-validée.
+                    Merci <span className="font-semibold text-slate-955">{submittedInfo?.nom}</span>. Votre demande de devis pour l'assurance <span className="font-semibold text-[#D4AF37]">{selectedChoice.title}</span> est pré-validée.
                   </DialogDescription>
                 </div>
 
                 <div className="p-5 bg-slate-50 rounded-2xl w-full max-w-md text-left border border-slate-200 space-y-3">
-                  <p className="text-xs text-[#AA7C11] uppercase tracking-wider font-semibold">Détails de votre entretien</p>
+                  <p className="text-xs text-[#D4AF37] uppercase tracking-wider font-semibold">Détails de votre entretien</p>
                   <div className="text-sm space-y-1.5">
                     {callDuration ? (
                       <>
@@ -912,7 +1039,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                 <div className="w-full max-w-md pt-2">
                   <Button
                     onClick={handleClose}
-                    className="w-full bg-slate-800 hover:bg-slate-950 text-white font-medium py-3 rounded-xl transition-all duration-300 cursor-pointer shadow-md"
+                    className="w-full bg-[#0B132B] hover:bg-[#152244] text-white font-medium py-3 rounded-xl transition-all duration-300 cursor-pointer shadow-md"
                   >
                     Fermer la fenêtre
                   </Button>
