@@ -20,12 +20,16 @@ import {
   ArrowRight,
   CheckCircle,
   Loader2,
+  Heart,
+  Shield,
+  Wrench,
 } from "lucide-react";
 
 interface InsuranceModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   defaultChoiceId?: string;
+  onShowToast?: (msg: string) => void;
 }
 
 type InsuranceChoice = {
@@ -140,8 +144,29 @@ const choices: InsuranceChoice[] = [
   {
     id: "moto",
     title: "Moto",
-    description: "Garanties conducteur, dommages et vol adaptées pour tous les motards and cylindrées.",
+    description: "Garanties conducteur, dommages et vol adaptées pour tous les motards et cylindrées.",
     icon: MotoIcon,
+    iconColor: "text-[#D4AF37]",
+  },
+  {
+    id: "sante",
+    title: "Santé",
+    description: "Des garanties sur-mesure pour votre santé.",
+    icon: Heart,
+    iconColor: "text-[#D4AF37]",
+  },
+  {
+    id: "emprunteur",
+    title: "Emprunteur",
+    description: "Sécurisez votre crédit aux meilleures conditions.",
+    icon: Shield,
+    iconColor: "text-[#D4AF37]",
+  },
+  {
+    id: "fad",
+    title: "FAD Service Dépannage",
+    description: "Assistance et dépannage rapide.",
+    icon: Wrench,
     iconColor: "text-[#D4AF37]",
   },
 ];
@@ -174,7 +199,12 @@ const formatDate = (val: string): string => {
   return formatted;
 };
 
-export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: InsuranceModalProps) {
+const monthsList = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+];
+
+export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowToast }: InsuranceModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedChoice, setSelectedChoice] = useState<InsuranceChoice | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -187,75 +217,22 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
   const [callDuration, setCallDuration] = useState<"15min" | "30min" | null>(null);
   const [appointmentDate, setAppointmentDate] = useState("");
 
-  // Month Grid Range States
-  const [rangeStart, setRangeStart] = useState<{ year: number; monthIndex: number } | null>(null);
-  const [rangeEnd, setRangeEnd] = useState<{ year: number; monthIndex: number } | null>(null);
+  // Month Selector States
+  const [startMonth, setStartMonth] = useState<string>("");
+  const [startYear, setStartYear] = useState<string>("");
+  const [endMonth, setEndMonth] = useState<string>("");
+  const [endYear, setEndYear] = useState<string>("");
 
-  const years = [2023, 2024, 2025, 2026];
-  const monthsAbbr = ["Janv", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
-
-  const isMonthDisabled = (year: number, monthIndex: number): boolean => {
-    if (year === 2023 && monthIndex < 5) return true; // Before June 2023
-    if (year === 2026 && monthIndex > 5) return true; // After June 2026
-    return false;
-  };
-
-  const handleMonthClick = (year: number, monthIndex: number) => {
-    if (isMonthDisabled(year, monthIndex)) return;
-
-    if (!rangeStart || (rangeStart && rangeEnd)) {
-      // First click or reset
-      setRangeStart({ year, monthIndex });
-      setRangeEnd(null);
-    } else {
-      // Second click
-      const startVal = rangeStart.year * 12 + rangeStart.monthIndex;
-      const currentVal = year * 12 + monthIndex;
-      if (currentVal >= startVal) {
-        setRangeEnd({ year, monthIndex });
-      } else {
-        // Treat as new start if clicked before start month
-        setRangeStart({ year, monthIndex });
-        setRangeEnd(null);
+  useEffect(() => {
+    if (startMonth && startYear && endMonth && endYear) {
+      const startVal = parseInt(startYear) * 12 + monthsList.indexOf(startMonth);
+      const endVal = parseInt(endYear) * 12 + monthsList.indexOf(endMonth);
+      if (endVal < startVal) {
+        setEndMonth("");
+        setEndYear("");
       }
     }
-  };
-
-  const isMonthSelected = (year: number, monthIndex: number): boolean => {
-    if (!rangeStart) return false;
-    const val = year * 12 + monthIndex;
-    const startVal = rangeStart.year * 12 + rangeStart.monthIndex;
-    if (!rangeEnd) {
-      return val === startVal;
-    }
-    const endVal = rangeEnd.year * 12 + rangeEnd.monthIndex;
-    return val >= startVal && val <= endVal && !isMonthDisabled(year, monthIndex);
-  };
-
-  const getSelectedMonthsCount = (): number => {
-    if (!rangeStart) return 0;
-    const startVal = rangeStart.year * 12 + rangeStart.monthIndex;
-    if (!rangeEnd) return 1;
-    const endVal = rangeEnd.year * 12 + rangeEnd.monthIndex;
-
-    let count = 0;
-    years.forEach((y) => {
-      monthsAbbr.forEach((_, m) => {
-        if (!isMonthDisabled(y, m)) {
-          const val = y * 12 + m;
-          if (val >= startVal && val <= endVal) {
-            count++;
-          }
-        }
-      });
-    });
-    return count;
-  };
-
-  const selectAllPeriod = () => {
-    setRangeStart({ year: 2023, monthIndex: 5 }); // June 2023
-    setRangeEnd({ year: 2026, monthIndex: 5 });   // June 2026
-  };
+  }, [startMonth, startYear, endMonth, endYear]);
 
   // Path A Form
   const trottinetteForm = useForm<TrottinetteFormData>({
@@ -289,13 +266,30 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
     if (isOpen && defaultChoiceId) {
       const found = choices.find((c) => c.id === defaultChoiceId);
       if (found) {
+        if (found.id === "sante" || found.id === "emprunteur" || found.id === "fad") {
+          if (onShowToast) {
+            onShowToast("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
+          } else {
+            alert("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
+          }
+          onOpenChange(false);
+          return;
+        }
         setSelectedChoice(found);
         setStep(2);
       }
     }
-  }, [isOpen, defaultChoiceId]);
+  }, [isOpen, defaultChoiceId, onOpenChange, onShowToast]);
 
   const handleChoiceSelect = (choice: InsuranceChoice) => {
+    if (choice.id === "sante" || choice.id === "emprunteur" || choice.id === "fad") {
+      if (onShowToast) {
+        onShowToast("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
+      } else {
+        alert("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
+      }
+      return;
+    }
     setSelectedChoice(choice);
     setStep(2);
     setError(null);
@@ -316,8 +310,10 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
       setIsConfirmed(false);
       setCallDuration(null);
       setAppointmentDate("");
-      setRangeStart(null);
-      setRangeEnd(null);
+      setStartMonth("");
+      setStartYear("");
+      setEndMonth("");
+      setEndYear("");
       trottinetteForm.reset();
       autoMotoForm.reset();
       setError(null);
@@ -338,6 +334,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
         codePostal: data.codePostal,
         telephone: data.telephone,
         assuranceType: selectedChoice.title,
+        adminEmail: "benhida.ilyass@gmail.com",
       };
 
       const response = await fetch("/api/send-email", {
@@ -380,6 +377,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
         dejaAssure: data.dejaAssure,
         periodeAssurance: data.dejaAssure === "Oui" ? data.periodeAssurance : undefined,
         crm: data.crm,
+        adminEmail: "benhida.ilyass@gmail.com",
       };
 
       const response = await fetch("/api/send-email", {
@@ -411,14 +409,23 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
 
   useEffect(() => {
     if (dejaAssureVal === "Non") {
-      setRangeStart(null);
-      setRangeEnd(null);
+      setStartMonth("");
+      setStartYear("");
+      setEndMonth("");
+      setEndYear("");
       autoMotoForm.setValue("crm", "1.00");
     }
   }, [dejaAssureVal, autoMotoForm]);
 
-  const selectedMonthsCount = getSelectedMonthsCount();
-  const isRangeSelected = rangeStart !== null && rangeEnd !== null;
+  // Calculate selected months count
+  let selectedMonthsCount = 0;
+  if (startMonth && startYear && endMonth && endYear) {
+    const startVal = parseInt(startYear) * 12 + monthsList.indexOf(startMonth);
+    const endVal = parseInt(endYear) * 12 + monthsList.indexOf(endMonth);
+    if (endVal >= startVal) {
+      selectedMonthsCount = endVal - startVal + 1;
+    }
+  }
 
   useEffect(() => {
     if (dejaAssureVal === "Oui") {
@@ -471,9 +478,21 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
     ? new Date(appointmentDate).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })
     : "";
 
+  const handleCrmBlur = (val: string, onChange: (val: string) => void) => {
+    if (val === "") return;
+    const parsed = parseFloat(val);
+    if (isNaN(parsed) || parsed < 0.50) {
+      onChange("0.50");
+    } else if (parsed > 5.00) {
+      onChange("5.00");
+    } else {
+      onChange(parsed.toFixed(2));
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : handleClose())}>
-      <DialogContent className="sm:max-w-2xl bg-white border border-slate-200 p-6 sm:p-8 rounded-2xl overflow-y-auto max-h-[90vh] shadow-2xl">
+      <DialogContent className="sm:max-w-2xl bg-white border border-slate-200 p-6 sm:p-8 rounded-2xl overflow-y-auto max-h-[90vh] shadow-2xl text-slate-900">
         {step === 1 && (
           <div className="space-y-6">
             <DialogHeader className="text-center sm:text-left">
@@ -492,7 +511,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                   <button
                     key={choice.id}
                     onClick={() => handleChoiceSelect(choice)}
-                    className="flex items-start gap-4 p-4.5 text-left rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#D4AF37]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#D4AF37]/5 hover:-translate-y-0.5 group cursor-pointer"
+                    className="flex items-start gap-4 p-4.5 text-left rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#D4AF37]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#D4AF37]/5 hover:-translate-y-0.5 group cursor-pointer w-full"
                   >
                     <div className="p-3.5 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] shrink-0 group-hover:scale-110 transition-transform duration-300">
                       <IconComponent className="h-6 w-6" />
@@ -519,7 +538,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                 <Button
                   variant="ghost"
                   onClick={isSubmitted ? () => setIsSubmitted(false) : handleBackToStep1}
-                  className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl h-10 w-10 p-0"
+                  className="text-slate-500 hover:text-[#0B132B] hover:bg-slate-100 rounded-xl h-10 w-10 p-0"
                   type="button"
                 >
                   <ArrowLeft className="h-5 w-5" />
@@ -649,7 +668,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
+                        className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
                       >
                         {isSubmitting ? (
                           <>
@@ -826,79 +845,140 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
 
                       {dejaAssureVal === "Oui" && (
                         <div className="space-y-4 border border-slate-200 rounded-2xl p-4 bg-slate-50/50 animate-in fade-in slide-in-from-top-2 duration-300">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <span className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
-                              SÉLECTIONNEZ LA RÉPARTITION DES PÉRIODES D'ASSURANCE DEPUIS LE 07/06/2023
-                            </span>
-                            <button
-                              type="button"
-                              onClick={selectAllPeriod}
-                              className="text-xs font-semibold text-[#D4AF37] hover:text-[#c39e2e] transition-colors self-start sm:self-auto"
-                            >
-                              Sélectionner toute la période
-                            </button>
+                          {/* 1. First element: The CRM Bonus/Malus input field */}
+                          <div className="space-y-2">
+                            <Label htmlFor="crm-am" className="text-sm font-semibold text-[#0B132B]">
+                              CRM (Bonus/Malus) *
+                            </Label>
+                            <Input
+                              id="crm-am"
+                              type="text"
+                              placeholder="1.00"
+                              {...autoMotoForm.register("crm", {
+                                onChange: (e) => {
+                                  let val = e.target.value.replace(/,/g, ".");
+                                  const currentCrm = autoMotoForm.getValues("crm") || "";
+                                  const nativeEvent = e.nativeEvent as any;
+                                  const isDeletion =
+                                    nativeEvent?.inputType === "deleteContentBackward" ||
+                                    nativeEvent?.inputType === "deleteContentForward" ||
+                                    nativeEvent?.inputType?.startsWith("delete") ||
+                                    val.length < currentCrm.length;
+
+                                  if (isDeletion) {
+                                    autoMotoForm.setValue("crm", val);
+                                    return;
+                                  }
+                                  if (/^[0-5]$/.test(val)) {
+                                    val = val + ".";
+                                  }
+                                  const pattern = /^(?:0(?:\.(?:[5-9]\d?)?)?|[1-4](?:\.\d{0,2})?|5(?:\.(?:00?)?)?)?$/;
+                                  if (val === "" || pattern.test(val)) {
+                                    autoMotoForm.setValue("crm", val);
+                                  }
+                                },
+                                onBlur: (e) => handleCrmBlur(e.target.value, (val) => autoMotoForm.setValue("crm", val)),
+                              })}
+                              className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                            />
+                            {autoMotoForm.formState.errors.crm && (
+                              <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.crm.message}</p>
+                            )}
                           </div>
 
-                          {/* Month selector grid */}
-                          <div className="space-y-3">
-                            {years.map((year) => (
-                              <div key={year} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                <span className="w-12 text-sm font-bold text-[#0B132B] shrink-0">{year}</span>
-                                <div className="grid grid-cols-4 sm:grid-cols-12 gap-1.5 flex-1">
-                                  {monthsAbbr.map((month, mIdx) => {
-                                    const isDisabled = isMonthDisabled(year, mIdx);
-                                    const isSelected = isMonthSelected(year, mIdx);
+                          {/* 2. Second element: The insurance period selector (Start and End Date dropdowns) */}
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4 space-y-4">
+                            {/* Row 1 - Période de début */}
+                            <div className="space-y-1.5">
+                              <Label className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
+                                Période de début
+                              </Label>
+                              <div className="grid grid-cols-2 gap-3">
+                                <select
+                                  value={startMonth}
+                                  onChange={(e) => setStartMonth(e.target.value)}
+                                  className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
+                                >
+                                  <option value="">Mois</option>
+                                  {monthsList.map((m) => (
+                                    <option key={m} value={m}>{m}</option>
+                                  ))}
+                                </select>
+                                <select
+                                  value={startYear}
+                                  onChange={(e) => setStartYear(e.target.value)}
+                                  className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
+                                >
+                                  <option value="">Année</option>
+                                  {["2023", "2024", "2025", "2026"].map((y) => (
+                                    <option key={y} value={y}>{y}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Row 2 - Période de fin */}
+                            <div className="space-y-1.5">
+                              <Label className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
+                                Période de fin
+                              </Label>
+                              <div className="grid grid-cols-2 gap-3">
+                                <select
+                                  value={endMonth}
+                                  onChange={(e) => setEndMonth(e.target.value)}
+                                  className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
+                                >
+                                  <option value="">Mois</option>
+                                  {monthsList.map((m, idx) => {
+                                    const startYearNum = parseInt(startYear);
+                                    const endYearNum = parseInt(endYear);
+                                    const isMonthBeforeStart = 
+                                      startYearNum && 
+                                      endYearNum && 
+                                      startYearNum === endYearNum && 
+                                      startMonth && 
+                                      idx < monthsList.indexOf(startMonth);
+
                                     return (
-                                      <button
-                                        key={month}
-                                        type="button"
-                                        disabled={isDisabled}
-                                        onClick={() => handleMonthClick(year, mIdx)}
-                                        className={`border rounded-lg text-xs font-medium py-1.5 text-center transition-all cursor-pointer ${
-                                          isDisabled
-                                            ? "bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200"
-                                            : isSelected
-                                            ? "bg-[#D4AF37] text-white border-[#D4AF37] font-semibold shadow-sm"
-                                            : "bg-white text-[#0B132B] border-slate-200 hover:bg-slate-50 hover:border-[#D4AF37]/50"
-                                        }`}
+                                      <option 
+                                        key={m} 
+                                        value={m}
+                                        disabled={!!isMonthBeforeStart}
                                       >
-                                        {month}
-                                      </button>
+                                        {m}
+                                      </option>
                                     );
                                   })}
-                                </div>
+                                </select>
+                                <select
+                                  value={endYear}
+                                  onChange={(e) => setEndYear(e.target.value)}
+                                  className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
+                                >
+                                  <option value="">Année</option>
+                                  {["2023", "2024", "2025", "2026"].map((y) => {
+                                    const isYearBeforeStart = startYear && parseInt(y) < parseInt(startYear);
+                                    return (
+                                      <option 
+                                        key={y} 
+                                        value={y}
+                                        disabled={!!isYearBeforeStart}
+                                      >
+                                        {y}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
                               </div>
-                            ))}
-                          </div>
-
-                          <div className="flex justify-between items-center pt-2 text-sm font-semibold text-[#0B132B]">
-                            <span>Total des périodes d'assurance : {selectedMonthsCount} mois</span>
-                          </div>
-                          {autoMotoForm.formState.errors.periodeAssurance && (
-                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.periodeAssurance.message}</p>
-                          )}
-
-                          {/* Conditional CRM field rendering below the counter */}
-                          {isRangeSelected && (
-                            <div className="space-y-2 pt-4 border-t border-slate-200 animate-in fade-in slide-in-from-top-2 duration-300">
-                              <Label htmlFor="crm-am" className="text-sm font-semibold text-[#0B132B]">
-                                CRM (Bonus/Malus) *
-                              </Label>
-                              <Input
-                                id="crm-am"
-                                type="number"
-                                min="0.50"
-                                max="5.00"
-                                step="0.01"
-                                placeholder="1.00"
-                                {...autoMotoForm.register("crm")}
-                                className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                              />
-                              {autoMotoForm.formState.errors.crm && (
-                                <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.crm.message}</p>
-                              )}
                             </div>
-                          )}
+
+                            <div className="flex justify-between items-center pt-2 text-sm font-semibold text-[#0B132B]">
+                              <span>Total des périodes d'assurance : {selectedMonthsCount} mois</span>
+                            </div>
+                            {autoMotoForm.formState.errors.periodeAssurance && (
+                              <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.periodeAssurance.message}</p>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -916,7 +996,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
+                        className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
                       >
                         {isSubmitting ? (
                           <>
@@ -950,7 +1030,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                     <button
                       type="button"
                       onClick={() => handleSelectDuration("15min")}
-                      className={`py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
+                      className={`py-3 px-4 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
                         callDuration === "15min"
                           ? "bg-[#D4AF37] text-white border border-[#D4AF37] shadow-md shadow-[#D4AF37]/20"
                           : "bg-white text-[#0B132B] border border-slate-200 hover:bg-slate-50"
@@ -961,7 +1041,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                     <button
                       type="button"
                       onClick={() => handleSelectDuration("30min")}
-                      className={`py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
+                      className={`py-3 px-4 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
                         callDuration === "30min"
                           ? "bg-[#D4AF37] text-white border border-[#D4AF37] shadow-md shadow-[#D4AF37]/20"
                           : "bg-white text-[#0B132B] border border-slate-200 hover:bg-slate-50"
@@ -997,7 +1077,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId }: Insura
                   </Button>
                   <Button
                     type="submit"
-                    className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer"
+                    className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer"
                   >
                     Confirmer le rendez-vous
                   </Button>

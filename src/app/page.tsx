@@ -14,6 +14,8 @@ import {
   ArrowRight,
   Star,
   Check,
+  Heart,
+  Wrench,
 } from "lucide-react";
 
 // Custom SVG Scooter Icon
@@ -109,21 +111,23 @@ const LogoCheckedDocumentIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeChoiceId, setActiveChoiceId] = useState<string | undefined>(undefined);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToastNotification = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const handleOpenModal = (choiceId?: string) => {
+    if (choiceId === "sante" || choiceId === "emprunteur" || choiceId === "fad") {
+      showToastNotification("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
+      return;
+    }
     setActiveChoiceId(choiceId);
     setIsModalOpen(true);
   };
 
   const vehicleOffers = [
-    {
-      id: "trottinette",
-      title: "Trottinette Électrique",
-      description: "Responsabilité civile obligatoire, protection contre le vol, les dommages corporels et matériels en ville.",
-      icon: ScooterIcon,
-      accentBg: "bg-primary/10",
-      accentText: "text-primary",
-    },
     {
       id: "auto",
       title: "Automobile",
@@ -139,6 +143,35 @@ export default function Home() {
       icon: MotoIcon,
       accentBg: "bg-primary/10",
       accentText: "text-primary",
+    },
+    {
+      id: "trottinette",
+      title: "Trottinette Électrique",
+      description: "Responsabilité civile obligatoire, protection contre le vol, les dommages corporels et matériels en ville.",
+      icon: ScooterIcon,
+      accentBg: "bg-primary/10",
+      accentText: "text-primary",
+    },
+  ];
+
+  const otherOffers = [
+    {
+      id: "sante",
+      title: "Santé",
+      description: "Des garanties sur-mesure pour votre santé.",
+      icon: Heart,
+    },
+    {
+      id: "emprunteur",
+      title: "Emprunteur",
+      description: "Sécurisez votre crédit aux meilleures conditions.",
+      icon: Shield,
+    },
+    {
+      id: "fad",
+      title: "FAD Service Dépannage",
+      description: "Assistance et dépannage rapide.",
+      icon: Wrench,
     },
   ];
 
@@ -206,6 +239,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900">
+      {toast && (
+        <div className="fixed top-6 right-6 z-[9999] bg-[#0B132B] text-white px-5 py-3.5 rounded-xl shadow-2xl border border-white/10 flex items-center gap-3 transition-all duration-300 animate-in fade-in slide-in-from-top-5">
+          <span className="text-[#D4AF37]">⚠️</span>
+          <p className="text-sm font-semibold">{toast}</p>
+        </div>
+      )}
+
       <Header onGetQuoteClick={() => handleOpenModal()} />
 
       <main className="flex-grow">
@@ -220,9 +260,9 @@ export default function Home() {
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-tight max-w-5xl mx-auto">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-[#0B132B] leading-tight max-w-5xl mx-auto">
               <span className="text-[#D4AF37] block mb-3">SBA CONSEIL</span>
-              <span className="text-slate-800 block text-2xl sm:text-3xl lg:text-4xl font-bold tracking-wider uppercase mt-4">
+              <span className="text-[#0B132B] block text-2xl sm:text-3xl lg:text-4xl font-bold tracking-wider uppercase mt-4">
                 "ENSEMBLE, CONSTRUISONS VOTRE AVENIR ASSURÉ"
               </span>
             </h1>
@@ -244,7 +284,7 @@ export default function Home() {
                 onClick={() => {
                   document.getElementById("services")?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="w-full sm:w-auto border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 font-bold text-base py-5 px-9 rounded-xl shadow-sm transition-all duration-200 cursor-pointer"
+                className="w-full sm:w-auto border-slate-200 hover:border-slate-300 text-slate-600 hover:text-[#0B132B] bg-white hover:bg-slate-50 font-bold text-base py-5 px-9 rounded-xl shadow-sm transition-all duration-200 cursor-pointer"
               >
                 Découvrir nos offres
               </Button>
@@ -253,39 +293,40 @@ export default function Home() {
             {/* Quick Metrics */}
             <div className="mt-20 sm:mt-24 border-t border-slate-100 pt-10 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
               <div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">10+ Ans</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-[#0B132B]">10+ Ans</p>
                 <p className="text-xs font-semibold text-[#D4AF37] uppercase tracking-widest mt-2">D'Expertise</p>
               </div>
               <div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">99,2%</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-[#0B132B]">99,2%</p>
                 <p className="text-xs font-semibold text-[#D4AF37] uppercase tracking-widest mt-2">De Satisfaction</p>
               </div>
               <div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">&lt; 2 Min</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-[#0B132B]">&lt; 2 Min</p>
                 <p className="text-xs font-semibold text-[#D4AF37] uppercase tracking-widest mt-2">Devis En Ligne</p>
               </div>
               <div>
-                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">24h/24</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-[#0B132B]">24h/24</p>
                 <p className="text-xs font-semibold text-[#D4AF37] uppercase tracking-widest mt-2">Conseillers Dédiés</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Vehicle Insurances Choices */}
+        {/* Vehicle & Personal Insurances Choices */}
         <section id="services" className="py-24 sm:py-32 bg-slate-50 border-y border-slate-100 relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
-              <h2 className="text-sm font-bold text-[#D4AF37] uppercase tracking-widest">Nos Offres Mobilité</h2>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-                Assurances Véhicules Sur-Mesure
+              <h2 className="text-sm font-bold text-[#D4AF37] uppercase tracking-widest">Nos Offres</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-[#0B132B] tracking-tight">
+                Assurances Sur-Mesure
               </h2>
               <p className="text-slate-600 leading-relaxed font-light">
-                Sélectionnez le type de véhicule pour lequel vous souhaitez recevoir une étude tarifaire personnalisée par nos experts de courtage.
+                Sélectionnez le type d'assurance pour lequel vous souhaitez recevoir une étude tarifaire personnalisée par nos experts de courtage.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Row 1: Vehicles */}
               {vehicleOffers.map((offer) => {
                 const IconComponent = offer.icon;
                 return (
@@ -297,7 +338,7 @@ export default function Home() {
                       <div className="inline-flex p-3.5 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] mb-6">
                         <IconComponent className="h-6 w-6" />
                       </div>
-                      <h3 className="text-xl font-bold text-slate-900 mb-3">
+                      <h3 className="text-xl font-bold text-[#0B132B] mb-3">
                         {offer.title}
                       </h3>
                       <p className="text-slate-600 text-sm leading-relaxed mb-8 font-light font-sans">
@@ -308,7 +349,39 @@ export default function Home() {
                       onClick={() => handleOpenModal(offer.id)}
                       className="w-full bg-[#D4AF37] hover:bg-[#c39e2e] text-white rounded-xl py-3 font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 group/btn cursor-pointer"
                     >
-                      Obtenir un devis {offer.title.split(" ")[0]}
+                      Obtenir mon devis
+                      <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
+                    </Button>
+                  </div>
+                );
+              })}
+
+              {/* Row 2: Other Offers */}
+              {otherOffers.map((offer) => {
+                const IconComponent = offer.icon;
+                return (
+                  <div
+                    key={offer.id}
+                    className="bg-white border border-slate-100 p-8 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div>
+                      <div className="inline-flex p-3.5 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] mb-6">
+                        <IconComponent className="h-6 w-6" />
+                      </div>
+                      <h3 className="text-xl font-bold text-[#0B132B] mb-3">
+                        {offer.title}
+                      </h3>
+                      <p className="text-slate-600 text-sm leading-relaxed mb-8 font-light font-sans">
+                        {offer.description}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        showToastNotification("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
+                      }}
+                      className="w-full bg-[#D4AF37] hover:bg-[#c39e2e] text-white rounded-xl py-3 font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 group/btn cursor-pointer"
+                    >
+                      Nous contacter
                       <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
                     </Button>
                   </div>
@@ -323,7 +396,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
               <h2 className="text-sm font-bold text-[#D4AF37] uppercase tracking-widest">Une Expertise Globale</h2>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-bold text-[#0B132B] tracking-tight">
                 Votre Patrimoine & Personne Protégés
               </h2>
               <p className="text-slate-600 leading-relaxed font-light">
@@ -342,7 +415,7 @@ export default function Home() {
                     <div className="p-4 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] mb-2">
                       <IconComponent className="h-8 w-8" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900">{item.title}</h3>
+                    <h3 className="text-lg font-bold text-[#0B132B]">{item.title}</h3>
                     <p className="text-slate-600 text-sm leading-relaxed font-light">{item.description}</p>
                   </div>
                 );
@@ -359,7 +432,7 @@ export default function Home() {
                 <div className="inline-flex bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-3 py-1 rounded-full text-xs font-semibold text-[#D4AF37] uppercase tracking-widest">
                   Pourquoi SBA Conseil
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+                <h2 className="text-3xl sm:text-4xl font-bold text-[#0B132B] tracking-tight leading-tight">
                   L'exigence d'un courtier d'exception
                 </h2>
                 <p className="text-slate-600 leading-relaxed font-light">
@@ -392,7 +465,7 @@ export default function Home() {
                       <div className="bg-[#D4AF37]/10 text-[#D4AF37] p-3 rounded-xl inline-flex mb-4">
                         <Icon className="h-5 w-5" />
                       </div>
-                      <h3 className="font-bold text-slate-900 mb-2">{feature.title}</h3>
+                      <h3 className="font-bold text-[#0B132B] mb-2">{feature.title}</h3>
                       <p className="text-slate-600 text-sm leading-relaxed font-light">{feature.description}</p>
                     </div>
                   );
@@ -407,7 +480,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
               <h2 className="text-sm font-bold text-[#D4AF37] uppercase tracking-widest">Témoignages Clients</h2>
-              <p className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              <p className="text-3xl sm:text-4xl font-bold text-[#0B132B] tracking-tight">
                 Ils nous font confiance
               </p>
               <p className="text-slate-600 leading-relaxed font-light">
@@ -433,7 +506,7 @@ export default function Home() {
                     </p>
                   </div>
                   <div className="border-t border-slate-200 mt-6 pt-5 flex flex-col">
-                    <span className="font-bold text-slate-900 text-sm">{t.author}</span>
+                    <span className="font-bold text-[#0B132B] text-sm">{t.author}</span>
                     <span className="text-xs text-slate-500 mt-1">{t.role}</span>
                   </div>
                 </div>
@@ -446,7 +519,7 @@ export default function Home() {
         <section className="bg-slate-50 text-slate-900 py-20 sm:py-24 relative overflow-hidden border-t border-slate-200">
           <div className="absolute inset-0 bg-[#D4AF37]/5 pointer-events-none" />
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 relative z-10">
-            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-slate-900">
+            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-[#0B132B]">
               Prêt à sécuriser votre avenir avec sérénité ?
             </h2>
             <p className="text-slate-600 max-w-xl mx-auto text-base sm:text-lg font-light">
@@ -471,6 +544,7 @@ export default function Home() {
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
         defaultChoiceId={activeChoiceId}
+        onShowToast={showToastNotification}
       />
     </div>
   );
