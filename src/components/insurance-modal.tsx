@@ -199,6 +199,9 @@ const formatDate = (val: string): string => {
   return formatted;
 };
 
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES = ['00', '10', '20', '30', '40', '50'];
+
 const monthsList = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
@@ -209,13 +212,16 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
   const [selectedChoice, setSelectedChoice] = useState<InsuranceChoice | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [submittedInfo, setSubmittedInfo] = useState<{ nom: string; email: string; telephone: string } | null>(null);
+  const [submittedInfo, setSubmittedInfo] = useState<any | null>(null);
 
   // Scheduling States
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
-  const [callDuration, setCallDuration] = useState<"15min" | "30min" | null>(null);
-  const [appointmentDate, setAppointmentDate] = useState("");
+  const [scheduleMode, setScheduleMode] = useState<"immediate" | "future">("immediate");
+  const [callPreference, setCallPreference] = useState<"15min" | "30min" | "custom" | null>(null);
+  const [callDate, setCallDate] = useState("");
+  const [callHour, setCallHour] = useState("");
+  const [callMinute, setCallMinute] = useState("");
 
   // Month Selector States
   const [startMonth, setStartMonth] = useState<string>("");
@@ -308,8 +314,11 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
       setSubmittedInfo(null);
       setIsSubmitted(false);
       setIsConfirmed(false);
-      setCallDuration(null);
-      setAppointmentDate("");
+      setScheduleMode("immediate");
+      setCallPreference(null);
+      setCallDate("");
+      setCallHour("");
+      setCallMinute("");
       setStartMonth("");
       setStartYear("");
       setEndMonth("");
@@ -323,83 +332,33 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
   // Submit Path A
   const onTrottinetteSubmit = async (data: TrottinetteFormData) => {
     if (!selectedChoice) return;
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const payload = {
-        nom: data.nom,
-        email: data.email,
-        age: data.age,
-        codePostal: data.codePostal,
-        telephone: data.telephone,
-        assuranceType: selectedChoice.title,
-        adminEmail: "benhida.ilyass@gmail.com",
-      };
-
-      const response = await fetch("/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || "Échec de l'envoi de la demande. Veuillez réessayer.");
-      }
-
-      setSubmittedInfo({ nom: data.nom, email: data.email, telephone: data.telephone });
-      setIsSubmitted(true);
-    } catch (err: any) {
-      setError(err.message || "Une erreur inattendue est survenue.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setSubmittedInfo({
+      nom: data.nom,
+      email: data.email,
+      age: data.age,
+      codePostal: data.codePostal,
+      telephone: data.telephone,
+      assuranceType: selectedChoice.title,
+    });
+    setIsSubmitted(true);
   };
 
   // Submit Path B
   const onAutoMotoSubmit = async (data: AutoMotoFormData) => {
     if (!selectedChoice) return;
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const payload = {
-        nom: data.nom,
-        email: data.email,
-        telephone: data.telephone,
-        immatriculation: data.immatriculation,
-        datePermis: data.datePermis,
-        categoriePermis: data.categoriePermis,
-        assuranceType: selectedChoice.title,
-        dejaAssure: data.dejaAssure,
-        periodeAssurance: data.dejaAssure === "Oui" ? data.periodeAssurance : undefined,
-        crm: data.crm,
-        adminEmail: "benhida.ilyass@gmail.com",
-      };
-
-      const response = await fetch("/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || "Échec de l'envoi de la demande. Veuillez réessayer.");
-      }
-
-      setSubmittedInfo({ nom: data.nom, email: data.email, telephone: data.telephone });
-      setIsSubmitted(true);
-    } catch (err: any) {
-      setError(err.message || "Une erreur inattendue est survenue.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setSubmittedInfo({
+      nom: data.nom,
+      email: data.email,
+      telephone: data.telephone,
+      immatriculation: data.immatriculation,
+      datePermis: data.datePermis,
+      categoriePermis: data.categoriePermis,
+      assuranceType: selectedChoice.title,
+      dejaAssure: data.dejaAssure,
+      periodeAssurance: data.dejaAssure === "Oui" ? data.periodeAssurance : undefined,
+      crm: data.crm,
+    });
+    setIsSubmitted(true);
   };
 
   const { onChange: onImmatriculationChange, ...immatriculationRest } = autoMotoForm.register("immatriculation");
@@ -435,48 +394,50 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
     }
   }, [selectedMonthsCount, dejaAssureVal, autoMotoForm]);
 
-  const handleConfirmAppointment = (e: React.FormEvent) => {
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!callDuration && !appointmentDate) {
-      setError("Veuillez choisir soit un rappel immédiat, soit une date ultérieure.");
+    if (scheduleMode === "immediate" && !callPreference) {
+      setError("Veuillez choisir une durée pour le rappel immédiat.");
+      return;
+    }
+    if (scheduleMode === "future" && (!callDate || !callHour || !callMinute)) {
+      setError("Veuillez renseigner la date et l'heure souhaitées.");
       return;
     }
     setError(null);
+    setIsSubmitting(true);
 
-    console.log("----------------------------------------");
-    console.log("📅 RDV CONFIRMÉ (SBA CONSEIL) !");
-    console.log(`Prospect :          ${submittedInfo?.nom}`);
-    console.log(`Email :             ${submittedInfo?.email}`);
-    console.log(`Téléphone :         ${submittedInfo?.telephone}`);
-    console.log(`Type d'assurance :  ${selectedChoice?.title}`);
+    try {
+      const finalCallTime = callHour && callMinute ? `${callHour}:${callMinute}` : "";
+      const payload = {
+        ...(selectedChoice?.id === "trottinette" ? trottinetteForm.getValues() : autoMotoForm.getValues()),
+        assuranceType: selectedChoice?.title,
+        callPreference,
+        callDate,
+        callTime: finalCallTime,
+        adminEmail: "benhida.ilyass@gmail.com",
+      };
 
-    if (callDuration) {
-      console.log(`Type de rappel :    Appel immédiat`);
-      console.log(`Durée de l'appel :  ${callDuration === "15min" ? "15 minutes" : "30 minutes"}`);
-    } else {
-      console.log(`Type de rappel :    Appel planifié`);
-      console.log(`Date & Heure :      ${appointmentDate}`);
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || "Échec de la confirmation.");
+      }
+
+      setIsConfirmed(true);
+    } catch (err: any) {
+      setError(err.message || "Une erreur est survenue.");
+    } finally {
+      setIsSubmitting(false);
     }
-    console.log("----------------------------------------");
-
-    setIsConfirmed(true);
   };
-
-  const handleSelectDuration = (duration: "15min" | "30min") => {
-    setCallDuration(duration);
-    setAppointmentDate(""); 
-    setError(null);
-  };
-
-  const handleSelectDate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAppointmentDate(e.target.value);
-    setCallDuration(null); 
-    setError(null);
-  };
-
-  const formattedDate = appointmentDate
-    ? new Date(appointmentDate).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })
-    : "";
 
   const handleCrmBlur = (val: string, onChange: (val: string) => void) => {
     if (val === "") return;
@@ -686,7 +647,6 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                   </form>
                 ) : (
                   <form onSubmit={autoMotoForm.handleSubmit(onAutoMotoSubmit)} className="space-y-5 w-full max-w-full overflow-hidden px-2 sm:px-4">
-                    {/* 1. Numéro d'immatriculation */}
                     <div className="space-y-2">
                       <Label htmlFor="immatriculation-am" className="text-sm font-semibold text-[#0B132B]">
                         Numéro d'immatriculation *
@@ -708,7 +668,6 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                       )}
                     </div>
 
-                    {/* 2. Nom complet */}
                     <div className="space-y-2">
                       <Label htmlFor="nom-am" className="text-sm font-semibold text-[#0B132B]">
                         Nom complet *
@@ -724,7 +683,6 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                       )}
                     </div>
 
-                    {/* 3. Date d'obtention / Catégorie permis row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="datePermis-am" className="text-sm font-semibold text-[#0B132B]">
@@ -779,7 +737,6 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                       </div>
                     </div>
 
-                    {/* 4. Adresse E-mail */}
                     <div className="space-y-2">
                       <Label htmlFor="email-am" className="text-sm font-semibold text-[#0B132B]">
                         Adresse E-mail *
@@ -796,7 +753,6 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                       )}
                     </div>
 
-                    {/* 5. Numéro de téléphone */}
                     <div className="space-y-2">
                       <Label htmlFor="telephone-am" className="text-sm font-semibold text-[#0B132B]">
                         Numéro de téléphone *
@@ -812,7 +768,6 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                       )}
                     </div>
 
-                    {/* 6. Question: "Avez-vous été assuré au cours des 3 dernières années ?" */}
                     <div className="space-y-4 pt-2 border-t border-slate-100">
                       <div className="space-y-2">
                         <Label className="text-sm font-semibold text-[#0B132B]">
@@ -845,7 +800,6 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
 
                       {dejaAssureVal === "Oui" && (
                         <div className="space-y-4 border border-slate-200 rounded-2xl p-4 bg-slate-50/50 animate-in fade-in slide-in-from-top-2 duration-300">
-                          {/* 1. First element: The CRM Bonus/Malus input field */}
                           <div className="space-y-2">
                             <Label htmlFor="crm-am" className="text-sm font-semibold text-[#0B132B]">
                               CRM (Bonus/Malus) *
@@ -886,9 +840,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                             )}
                           </div>
 
-                          {/* 2. Second element: The insurance period selector (Start and End Date dropdowns) */}
                           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4 space-y-4">
-                            {/* Row 1 - Période de début */}
                             <div className="space-y-1.5">
                               <Label className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
                                 Période de début
@@ -917,7 +869,6 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                               </div>
                             </div>
 
-                            {/* Row 2 - Période de fin */}
                             <div className="space-y-1.5">
                               <Label className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
                                 Période de fin
@@ -1015,36 +966,41 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                 )}
               </>
             ) : !isConfirmed ? (
-              <form onSubmit={handleConfirmAppointment} className="space-y-6 w-full max-w-full overflow-hidden px-2 sm:px-4">
+              <form onSubmit={handleFinalSubmit} className="space-y-6 w-full max-w-full overflow-hidden px-2 sm:px-4">
                 {error && (
                   <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
                     {error}
                   </div>
                 )}
 
-                <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                  <Label className="text-sm font-semibold text-[#0B132B]">
-                    Être rappelé rapidement (Appel immédiat)
-                  </Label>
-                  <div className="grid grid-cols-2 gap-3">
+                {/* Top Container (Appel immédiat) */}
+                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-4">
+                  <p className="text-[#0B132B] font-semibold mb-4">Être rappelé rapidement (Appel immédiat)</p>
+                  <div className="grid grid-cols-2 gap-4">
                     <button
                       type="button"
-                      onClick={() => handleSelectDuration("15min")}
-                      className={`py-3 px-4 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
-                        callDuration === "15min"
-                          ? "bg-[#D4AF37] text-white border border-[#D4AF37] shadow-md shadow-[#D4AF37]/20"
-                          : "bg-white text-[#0B132B] border border-slate-200 hover:bg-slate-50"
+                      onClick={() => {
+                        setCallPreference("15min");
+                        setError(null);
+                      }}
+                      className={`h-12 rounded-lg font-semibold text-sm transition-all duration-200 cursor-pointer border ${
+                        callPreference === "15min"
+                          ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
+                          : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
                       }`}
                     >
                       15 min
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleSelectDuration("30min")}
-                      className={`py-3 px-4 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
-                        callDuration === "30min"
-                          ? "bg-[#D4AF37] text-white border border-[#D4AF37] shadow-md shadow-[#D4AF37]/20"
-                          : "bg-white text-[#0B132B] border border-slate-200 hover:bg-slate-50"
+                      onClick={() => {
+                        setCallPreference("30min");
+                        setError(null);
+                      }}
+                      className={`h-12 rounded-lg font-semibold text-sm transition-all duration-200 cursor-pointer border ${
+                        callPreference === "30min"
+                          ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
+                          : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
                       }`}
                     >
                       30 min
@@ -1052,34 +1008,72 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                   </div>
                 </div>
 
-                <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                  <Label htmlFor="appointment-date" className="text-sm font-semibold text-[#0B132B]">
-                    Ou choisir une date ultérieure
-                  </Label>
-                  <input
-                    id="appointment-date"
-                    type="datetime-local"
-                    value={appointmentDate}
-                    onChange={handleSelectDate}
-                    className="w-full bg-white border border-slate-300 text-[#0B132B] px-4 py-3.5 rounded-xl focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-base h-12"
-                  />
+                {/* Bottom Container (Date ultérieure) */}
+                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                  <p className="text-[#0B132B] font-semibold mb-4">Ou choisir une date ultérieure</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="date"
+                      className="w-full h-12 px-4 border border-slate-300 rounded-lg text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
+                      value={callDate}
+                      onChange={(e) => {
+                        setCallDate(e.target.value);
+                        setCallPreference('custom');
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <select
+                        className="w-full h-12 px-4 border border-slate-300 rounded-lg text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
+                        value={callHour}
+                        onChange={(e) => {
+                          setCallHour(e.target.value);
+                          setCallPreference('custom');
+                        }}
+                      >
+                        <option value="" disabled>Heure</option>
+                        {HOURS.map(h => (
+                          <option key={h} value={h}>{h}h</option>
+                        ))}
+                      </select>
+                      <select
+                        className="w-full h-12 px-4 border border-slate-300 rounded-lg text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
+                        value={callMinute}
+                        onChange={(e) => {
+                          setCallMinute(e.target.value);
+                          setCallPreference('custom');
+                        }}
+                      >
+                        <option value="" disabled>Min</option>
+                        {MINUTES.map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Footer Actions */}
                 <div className="flex justify-between items-center pt-4 border-t border-slate-200 gap-4 mt-6">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setIsSubmitted(false)}
-                    className="text-slate-500 hover:text-[#0B132B] hover:bg-slate-100 rounded-xl px-5"
+                  <button
                     type="button"
+                    onClick={() => setIsSubmitted(false)}
+                    className="text-slate-500 hover:text-[#0B132B] font-semibold text-sm cursor-pointer"
                   >
-                    <ArrowLeft className="h-5 w-5 mr-2" />
-                    Précédent
-                  </Button>
+                    ← Précédent
+                  </button>
                   <Button
                     type="submit"
-                    className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer"
+                    disabled={isSubmitting}
+                    className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
                   >
-                    Confirmer le rendez-vous
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Confirmation...
+                      </>
+                    ) : (
+                      "Confirmer le rendez-vous"
+                    )}
                   </Button>
                 </div>
               </form>
@@ -1101,15 +1095,15 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                 <div className="p-5 bg-slate-50 rounded-2xl w-full max-w-md text-left border border-slate-200 space-y-3">
                   <p className="text-xs text-[#D4AF37] uppercase tracking-wider font-semibold">Détails de votre entretien</p>
                   <div className="text-sm space-y-1.5">
-                    {callDuration ? (
+                    {callPreference === "15min" || callPreference === "30min" ? (
                       <>
                         <p className="text-slate-600"><span className="font-medium text-slate-500">Type de rappel :</span> Immédiat</p>
-                        <p className="text-slate-600"><span className="font-medium text-slate-500">Délai :</span> {callDuration === "15min" ? "15 minutes" : "30 minutes"}</p>
+                        <p className="text-slate-600"><span className="font-medium text-slate-500">Délai :</span> {callPreference === "15min" ? "15 minutes" : "30 minutes"}</p>
                       </>
                     ) : (
                       <>
                         <p className="text-slate-600"><span className="font-medium text-slate-500">Type de rappel :</span> Planifié</p>
-                        <p className="text-slate-600"><span className="font-medium text-slate-500">Date & Heure :</span> {formattedDate}</p>
+                        <p className="text-slate-600"><span className="font-medium text-slate-500">Date & Heure :</span> Le {callDate} à {callHour}:{callMinute}</p>
                       </>
                     )}
                     <p className="text-slate-600"><span className="font-medium text-slate-500">Téléphone de contact :</span> {submittedInfo?.telephone}</p>
