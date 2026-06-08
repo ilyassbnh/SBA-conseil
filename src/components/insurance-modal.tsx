@@ -486,9 +486,9 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : handleClose())}>
-      <DialogContent className="w-full max-w-lg mx-auto bg-white border border-slate-200 p-4 py-6 sm:p-8 rounded-2xl overflow-y-auto max-h-[90vh] shadow-2xl text-slate-900">
+      <DialogContent className="w-full max-w-lg mx-auto bg-white rounded-xl shadow-xl flex flex-col max-h-[90vh] md:max-h-none border border-slate-200 text-slate-900 p-0 overflow-hidden">
         {step === 1 && (
-          <div className="space-y-6">
+          <div className="space-y-6 p-6 sm:p-8 overflow-y-auto flex-1 flex flex-col">
             <DialogHeader className="text-center sm:text-left">
               <DialogTitle className="text-2xl font-bold text-[#0B132B]">
                 Choisissez votre assurance
@@ -526,8 +526,8 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
         )}
 
         {step === 2 && selectedChoice && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col flex-1 overflow-hidden h-full">
+            <div className="flex items-center gap-3 p-6 pb-2 sm:p-8 sm:pb-2">
               {!isConfirmed && (
                 <Button
                   variant="ghost"
@@ -558,7 +558,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
             </div>
 
             {!isSubmitted ? (
-              <>
+              <div className="flex-1 flex flex-col overflow-hidden">
                 {error && (
                   <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
                     {error}
@@ -566,95 +566,97 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                 )}
 
                 {selectedChoice.id === "trottinette" ? (
-                  <form onSubmit={trottinetteForm.handleSubmit(onTrottinetteSubmit)} className="space-y-5 w-full max-w-full overflow-hidden px-2 sm:px-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="nom-t" className="text-sm font-semibold text-[#0B132B]">
-                          Nom complet *
-                        </Label>
-                        <Input
-                          id="nom-t"
-                          placeholder="Jean Dupont"
-                          {...trottinetteForm.register("nom")}
-                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                        />
-                        {trottinetteForm.formState.errors.nom && (
-                          <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.nom.message}</p>
-                        )}
+                  <form onSubmit={trottinetteForm.handleSubmit(onTrottinetteSubmit)} className="flex flex-col flex-1 overflow-hidden h-full">
+                    <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 pr-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="nom-t" className="text-sm font-semibold text-[#0B132B]">
+                            Nom complet *
+                          </Label>
+                          <Input
+                            id="nom-t"
+                            placeholder="Jean Dupont"
+                            {...trottinetteForm.register("nom")}
+                            className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          />
+                          {trottinetteForm.formState.errors.nom && (
+                            <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.nom.message}</p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="email-t" className="text-sm font-semibold text-[#0B132B]">
+                            Adresse E-mail *
+                          </Label>
+                          <Input
+                            id="email-t"
+                            type="email"
+                            placeholder="jean.dupont@exemple.com"
+                            {...trottinetteForm.register("email")}
+                            className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          />
+                          {trottinetteForm.formState.errors.email && (
+                            <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.email.message}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="age-t" className="text-sm font-semibold text-[#0B132B]">
+                            Âge *
+                          </Label>
+                          <Input
+                            id="age-t"
+                            type="number"
+                            placeholder="28"
+                            {...trottinetteForm.register("age")}
+                            className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          />
+                          {trottinetteForm.formState.errors.age && (
+                            <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.age.message}</p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="codePostal-t" className="text-sm font-semibold text-[#0B132B]">
+                            Code postal *
+                          </Label>
+                          <Input
+                            id="codePostal-t"
+                            placeholder="75002"
+                            maxLength={5}
+                            {...trottinetteForm.register("codePostal")}
+                            className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          />
+                          {trottinetteForm.formState.errors.codePostal && (
+                            <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.codePostal.message}</p>
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="email-t" className="text-sm font-semibold text-[#0B132B]">
-                          Adresse E-mail *
+                        <Label htmlFor="telephone-t" className="text-sm font-semibold text-[#0B132B]">
+                          Numéro de téléphone *
                         </Label>
                         <Input
-                          id="email-t"
-                          type="email"
-                          placeholder="jean.dupont@exemple.com"
-                          {...trottinetteForm.register("email")}
+                          id="telephone-t"
+                          placeholder="+33 6 12 34 56 78"
+                          onChange={(e) => {
+                            const formatted = formatTelephone(e.target.value);
+                            e.target.value = formatted;
+                            onTelephoneChangeA(e);
+                          }}
+                          {...telephoneRestA}
                           className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                         />
-                        {trottinetteForm.formState.errors.email && (
-                          <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.email.message}</p>
+                        {trottinetteForm.formState.errors.telephone && (
+                          <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.telephone.message}</p>
                         )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="age-t" className="text-sm font-semibold text-[#0B132B]">
-                          Âge *
-                        </Label>
-                        <Input
-                          id="age-t"
-                          type="number"
-                          placeholder="28"
-                          {...trottinetteForm.register("age")}
-                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                        />
-                        {trottinetteForm.formState.errors.age && (
-                          <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.age.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="codePostal-t" className="text-sm font-semibold text-[#0B132B]">
-                          Code postal *
-                        </Label>
-                        <Input
-                          id="codePostal-t"
-                          placeholder="75002"
-                          maxLength={5}
-                          {...trottinetteForm.register("codePostal")}
-                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                        />
-                        {trottinetteForm.formState.errors.codePostal && (
-                          <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.codePostal.message}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="telephone-t" className="text-sm font-semibold text-[#0B132B]">
-                        Numéro de téléphone *
-                      </Label>
-                      <Input
-                        id="telephone-t"
-                        placeholder="+33 6 12 34 56 78"
-                        onChange={(e) => {
-                          const formatted = formatTelephone(e.target.value);
-                          e.target.value = formatted;
-                          onTelephoneChangeA(e);
-                        }}
-                        {...telephoneRestA}
-                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                      />
-                      {trottinetteForm.formState.errors.telephone && (
-                        <p className="text-xs text-red-600 mt-1">{trottinetteForm.formState.errors.telephone.message}</p>
-                      )}
-                    </div>
-
-                    <div className="flex justify-between items-center pt-4 border-t border-slate-200 gap-4 mt-6">
+                    <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center mt-auto">
                       <Button
                         variant="ghost"
                         onClick={handleBackToStep1}
@@ -684,300 +686,302 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                     </div>
                   </form>
                 ) : (
-                  <form onSubmit={autoMotoForm.handleSubmit(onAutoMotoSubmit)} className="space-y-5 w-full max-w-full overflow-hidden px-2 sm:px-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="immatriculation-am" className="text-sm font-semibold text-[#0B132B]">
-                        Numéro d'immatriculation *
-                      </Label>
-                      <Input
-                        id="immatriculation-am"
-                        placeholder="AA-123-AA"
-                        maxLength={9}
-                        onChange={(e) => {
-                          const formatted = formatImmatriculation(e.target.value);
-                          e.target.value = formatted;
-                          onImmatriculationChange(e);
-                        }}
-                        {...immatriculationRest}
-                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 uppercase tracking-wider"
-                      />
-                      {autoMotoForm.formState.errors.immatriculation && (
-                        <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.immatriculation.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="nom-am" className="text-sm font-semibold text-[#0B132B]">
-                        Nom complet *
-                      </Label>
-                      <Input
-                        id="nom-am"
-                        placeholder="Jean Dupont"
-                        {...autoMotoForm.register("nom")}
-                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                      />
-                      {autoMotoForm.formState.errors.nom && (
-                        <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.nom.message}</p>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <form onSubmit={autoMotoForm.handleSubmit(onAutoMotoSubmit)} className="flex flex-col flex-1 overflow-hidden h-full">
+                    <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 pr-2">
                       <div className="space-y-2">
-                        <Label htmlFor="datePermis-am" className="text-sm font-semibold text-[#0B132B]">
-                          Date d'obtention *
+                        <Label htmlFor="immatriculation-am" className="text-sm font-semibold text-[#0B132B]">
+                          Numéro d'immatriculation *
                         </Label>
                         <Input
-                          id="datePermis-am"
-                          type="text"
-                          placeholder="DD/MM/YYYY"
-                          maxLength={10}
+                          id="immatriculation-am"
+                          placeholder="AA-123-AA"
+                          maxLength={9}
                           onChange={(e) => {
-                            const formatted = formatDate(e.target.value);
+                            const formatted = formatImmatriculation(e.target.value);
                             e.target.value = formatted;
-                            onDatePermisChange(e);
+                            onImmatriculationChange(e);
                           }}
-                          {...datePermisRest}
+                          {...immatriculationRest}
+                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 uppercase tracking-wider"
+                        />
+                        {autoMotoForm.formState.errors.immatriculation && (
+                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.immatriculation.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="nom-am" className="text-sm font-semibold text-[#0B132B]">
+                          Nom complet *
+                        </Label>
+                        <Input
+                          id="nom-am"
+                          placeholder="Jean Dupont"
+                          {...autoMotoForm.register("nom")}
                           className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                         />
-                        {autoMotoForm.formState.errors.datePermis && (
-                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.datePermis.message}</p>
+                        {autoMotoForm.formState.errors.nom && (
+                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.nom.message}</p>
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="categoriePermis-am" className="text-sm font-semibold text-[#0B132B]">
-                          Catégorie permis *
-                        </Label>
-                        <select
-                          id="categoriePermis-am"
-                          {...autoMotoForm.register("categoriePermis")}
-                          className="w-full box-border h-12 text-base rounded-xl border border-slate-200 bg-slate-50 px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none transition-colors"
-                        >
-                          <option value="">Permis...</option>
-                          {selectedChoice.id === "auto" ? (
-                            <>
-                              <option value="B">B</option>
-                              <option value="B1">B1</option>
-                              <option value="BE">BE</option>
-                            </>
-                          ) : (
-                            <>
-                              <option value="A">A</option>
-                              <option value="AM">AM</option>
-                              <option value="A1">A1</option>
-                              <option value="A2">A2</option>
-                            </>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="datePermis-am" className="text-sm font-semibold text-[#0B132B]">
+                            Date d'obtention *
+                          </Label>
+                          <Input
+                            id="datePermis-am"
+                            type="text"
+                            placeholder="DD/MM/YYYY"
+                            maxLength={10}
+                            onChange={(e) => {
+                              const formatted = formatDate(e.target.value);
+                              e.target.value = formatted;
+                              onDatePermisChange(e);
+                            }}
+                            {...datePermisRest}
+                            className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                          />
+                          {autoMotoForm.formState.errors.datePermis && (
+                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.datePermis.message}</p>
                           )}
-                        </select>
-                        {autoMotoForm.formState.errors.categoriePermis && (
-                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.categoriePermis.message}</p>
-                        )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="categoriePermis-am" className="text-sm font-semibold text-[#0B132B]">
+                            Catégorie permis *
+                          </Label>
+                          <select
+                            id="categoriePermis-am"
+                            {...autoMotoForm.register("categoriePermis")}
+                            className="w-full box-border h-12 text-base rounded-xl border border-slate-200 bg-slate-50 px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none transition-colors"
+                          >
+                            <option value="">Permis...</option>
+                            {selectedChoice.id === "auto" ? (
+                              <>
+                                <option value="B">B</option>
+                                <option value="B1">B1</option>
+                                <option value="BE">BE</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="A">A</option>
+                                <option value="AM">AM</option>
+                                <option value="A1">A1</option>
+                                <option value="A2">A2</option>
+                              </>
+                            )}
+                          </select>
+                          {autoMotoForm.formState.errors.categoriePermis && (
+                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.categoriePermis.message}</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="email-am" className="text-sm font-semibold text-[#0B132B]">
-                        Adresse E-mail *
-                      </Label>
-                      <Input
-                        id="email-am"
-                        type="email"
-                        placeholder="jean.dupont@exemple.com"
-                        {...autoMotoForm.register("email")}
-                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                      />
-                      {autoMotoForm.formState.errors.email && (
-                        <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.email.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="telephone-am" className="text-sm font-semibold text-[#0B132B]">
-                        Numéro de téléphone *
-                      </Label>
-                      <Input
-                        id="telephone-am"
-                        placeholder="+33 6 12 34 56 78"
-                        onChange={(e) => {
-                          const formatted = formatTelephone(e.target.value);
-                          e.target.value = formatted;
-                          onTelephoneChangeB(e);
-                        }}
-                        {...telephoneRestB}
-                        className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                      />
-                      {autoMotoForm.formState.errors.telephone && (
-                        <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.telephone.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-4 pt-2 border-t border-slate-100">
                       <div className="space-y-2">
-                        <Label className="text-sm font-semibold text-[#0B132B]">
-                          Avez-vous été assuré au cours des 3 dernières années ? *
+                        <Label htmlFor="email-am" className="text-sm font-semibold text-[#0B132B]">
+                          Adresse E-mail *
                         </Label>
-                        <div className="flex gap-6 mt-1.5">
-                          <label className="flex items-center gap-2 text-sm font-medium text-[#0B132B] cursor-pointer">
-                            <input
-                              type="radio"
-                              value="Oui"
-                              {...autoMotoForm.register("dejaAssure")}
-                              className="h-5 w-5 border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
-                            />
-                            Oui
-                          </label>
-                          <label className="flex items-center gap-2 text-sm font-medium text-[#0B132B] cursor-pointer">
-                            <input
-                              type="radio"
-                              value="Non"
-                              {...autoMotoForm.register("dejaAssure")}
-                              className="h-5 w-5 border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
-                            />
-                            Non
-                          </label>
-                        </div>
-                        {autoMotoForm.formState.errors.dejaAssure && (
-                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.dejaAssure.message}</p>
+                        <Input
+                          id="email-am"
+                          type="email"
+                          placeholder="jean.dupont@exemple.com"
+                          {...autoMotoForm.register("email")}
+                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                        />
+                        {autoMotoForm.formState.errors.email && (
+                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.email.message}</p>
                         )}
                       </div>
 
-                      {dejaAssureVal === "Oui" && (
-                        <div className="space-y-4 border border-slate-200 rounded-2xl p-4 bg-slate-50/50 animate-in fade-in slide-in-from-top-2 duration-300">
-                          <div className="space-y-2">
-                            <Label htmlFor="crm-am" className="text-sm font-semibold text-[#0B132B]">
-                              CRM (Bonus/Malus) *
-                            </Label>
-                            <Input
-                              id="crm-am"
-                              type="text"
-                              placeholder="1.00"
-                              {...autoMotoForm.register("crm", {
-                                onChange: (e) => {
-                                  let val = e.target.value.replace(/,/g, ".");
-                                  const currentCrm = autoMotoForm.getValues("crm") || "";
-                                  const nativeEvent = e.nativeEvent as any;
-                                  const isDeletion =
-                                    nativeEvent?.inputType === "deleteContentBackward" ||
-                                    nativeEvent?.inputType === "deleteContentForward" ||
-                                    nativeEvent?.inputType?.startsWith("delete") ||
-                                    val.length < currentCrm.length;
+                      <div className="space-y-2">
+                        <Label htmlFor="telephone-am" className="text-sm font-semibold text-[#0B132B]">
+                          Numéro de téléphone *
+                        </Label>
+                        <Input
+                          id="telephone-am"
+                          placeholder="+33 6 12 34 56 78"
+                          onChange={(e) => {
+                            const formatted = formatTelephone(e.target.value);
+                            e.target.value = formatted;
+                            onTelephoneChangeB(e);
+                          }}
+                          {...telephoneRestB}
+                          className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                        />
+                        {autoMotoForm.formState.errors.telephone && (
+                          <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.telephone.message}</p>
+                        )}
+                      </div>
 
-                                  if (isDeletion) {
-                                    autoMotoForm.setValue("crm", val);
-                                    return;
-                                  }
-                                  if (/^[0-5]$/.test(val)) {
-                                    val = val + ".";
-                                  }
-                                  const pattern = /^(?:0(?:\.(?:[5-9]\d?)?)?|[1-4](?:\.\d{0,2})?|5(?:\.(?:00?)?)?)?$/;
-                                  if (val === "" || pattern.test(val)) {
-                                    autoMotoForm.setValue("crm", val);
-                                  }
-                                },
-                                onBlur: (e) => handleCrmBlur(e.target.value, (val) => autoMotoForm.setValue("crm", val)),
-                              })}
-                              className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
-                            />
-                            {autoMotoForm.formState.errors.crm && (
-                              <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.crm.message}</p>
-                            )}
+                      <div className="space-y-4 pt-2 border-t border-slate-100">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold text-[#0B132B]">
+                            Avez-vous été assuré au cours des 3 dernières années ? *
+                          </Label>
+                          <div className="flex gap-6 mt-1.5">
+                            <label className="flex items-center gap-2 text-sm font-medium text-[#0B132B] cursor-pointer">
+                              <input
+                                type="radio"
+                                value="Oui"
+                                {...autoMotoForm.register("dejaAssure")}
+                                className="h-5 w-5 border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
+                              />
+                              Oui
+                            </label>
+                            <label className="flex items-center gap-2 text-sm font-medium text-[#0B132B] cursor-pointer">
+                              <input
+                                type="radio"
+                                value="Non"
+                                {...autoMotoForm.register("dejaAssure")}
+                                className="h-5 w-5 border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
+                              />
+                              Non
+                            </label>
                           </div>
-
-                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4 space-y-4">
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
-                                Période de début
-                              </Label>
-                              <div className="grid grid-cols-2 gap-3">
-                                <select
-                                  value={startMonth}
-                                  onChange={(e) => setStartMonth(e.target.value)}
-                                  className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
-                                >
-                                  <option value="">Mois</option>
-                                  {monthsList.map((m) => (
-                                    <option key={m} value={m}>{m}</option>
-                                  ))}
-                                </select>
-                                <select
-                                  value={startYear}
-                                  onChange={(e) => setStartYear(e.target.value)}
-                                  className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
-                                >
-                                  <option value="">Année</option>
-                                  {["2023", "2024", "2025", "2026"].map((y) => (
-                                    <option key={y} value={y}>{y}</option>
-                                  ))}
-                                </select>
-                              </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
-                                Période de fin
-                              </Label>
-                              <div className="grid grid-cols-2 gap-3">
-                                <select
-                                  value={endMonth}
-                                  onChange={(e) => setEndMonth(e.target.value)}
-                                  className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
-                                >
-                                  <option value="">Mois</option>
-                                  {monthsList.map((m, idx) => {
-                                    const startYearNum = parseInt(startYear);
-                                    const endYearNum = parseInt(endYear);
-                                    const isMonthBeforeStart = 
-                                      startYearNum && 
-                                      endYearNum && 
-                                      startYearNum === endYearNum && 
-                                      startMonth && 
-                                      idx < monthsList.indexOf(startMonth);
-
-                                    return (
-                                      <option 
-                                        key={m} 
-                                        value={m}
-                                        disabled={!!isMonthBeforeStart}
-                                      >
-                                        {m}
-                                      </option>
-                                    );
-                                  })}
-                                </select>
-                                <select
-                                  value={endYear}
-                                  onChange={(e) => setEndYear(e.target.value)}
-                                  className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
-                                >
-                                  <option value="">Année</option>
-                                  {["2023", "2024", "2025", "2026"].map((y) => {
-                                    const isYearBeforeStart = startYear && parseInt(y) < parseInt(startYear);
-                                    return (
-                                      <option 
-                                        key={y} 
-                                        value={y}
-                                        disabled={!!isYearBeforeStart}
-                                      >
-                                        {y}
-                                      </option>
-                                    );
-                                  })}
-                                </select>
-                              </div>
-                            </div>
-
-                            <div className="flex justify-between items-center pt-2 text-sm font-semibold text-[#0B132B]">
-                              <span>Total des périodes d'assurance : {selectedMonthsCount} mois</span>
-                            </div>
-                            {autoMotoForm.formState.errors.periodeAssurance && (
-                              <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.periodeAssurance.message}</p>
-                            )}
-                          </div>
+                          {autoMotoForm.formState.errors.dejaAssure && (
+                            <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.dejaAssure.message}</p>
+                          )}
                         </div>
-                      )}
+
+                        {dejaAssureVal === "Oui" && (
+                          <div className="space-y-4 border border-slate-200 rounded-2xl p-4 bg-slate-50/50 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="space-y-2">
+                              <Label htmlFor="crm-am" className="text-sm font-semibold text-[#0B132B]">
+                                CRM (Bonus/Malus) *
+                              </Label>
+                              <Input
+                                id="crm-am"
+                                type="text"
+                                placeholder="1.00"
+                                {...autoMotoForm.register("crm", {
+                                  onChange: (e) => {
+                                    let val = e.target.value.replace(/,/g, ".");
+                                    const currentCrm = autoMotoForm.getValues("crm") || "";
+                                    const nativeEvent = e.nativeEvent as any;
+                                    const isDeletion =
+                                      nativeEvent?.inputType === "deleteContentBackward" ||
+                                      nativeEvent?.inputType === "deleteContentForward" ||
+                                      nativeEvent?.inputType?.startsWith("delete") ||
+                                      val.length < currentCrm.length;
+
+                                    if (isDeletion) {
+                                      autoMotoForm.setValue("crm", val);
+                                      return;
+                                    }
+                                    if (/^[0-5]$/.test(val)) {
+                                      val = val + ".";
+                                    }
+                                    const pattern = /^(?:0(?:\.(?:[5-9]\d?)?)?|[1-4](?:\.\d{0,2})?|5(?:\.(?:00?)?)?)?$/;
+                                    if (val === "" || pattern.test(val)) {
+                                      autoMotoForm.setValue("crm", val);
+                                    }
+                                  },
+                                  onBlur: (e) => handleCrmBlur(e.target.value, (val) => autoMotoForm.setValue("crm", val)),
+                                })}
+                                className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
+                              />
+                              {autoMotoForm.formState.errors.crm && (
+                                <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.crm.message}</p>
+                              )}
+                            </div>
+
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4 space-y-4">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
+                                  Période de début
+                                </Label>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <select
+                                    value={startMonth}
+                                    onChange={(e) => setStartMonth(e.target.value)}
+                                    className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
+                                  >
+                                    <option value="">Mois</option>
+                                    {monthsList.map((m) => (
+                                      <option key={m} value={m}>{m}</option>
+                                    ))}
+                                  </select>
+                                  <select
+                                    value={startYear}
+                                    onChange={(e) => setStartYear(e.target.value)}
+                                    className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
+                                  >
+                                    <option value="">Année</option>
+                                    {["2023", "2024", "2025", "2026"].map((y) => (
+                                      <option key={y} value={y}>{y}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-bold text-[#0B132B] tracking-wider uppercase">
+                                  Période de fin
+                                </Label>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <select
+                                    value={endMonth}
+                                    onChange={(e) => setEndMonth(e.target.value)}
+                                    className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
+                                  >
+                                    <option value="">Mois</option>
+                                    {monthsList.map((m, idx) => {
+                                      const startYearNum = parseInt(startYear);
+                                      const endYearNum = parseInt(endYear);
+                                      const isMonthBeforeStart = 
+                                        startYearNum && 
+                                        endYearNum && 
+                                        startYearNum === endYearNum && 
+                                        startMonth && 
+                                        idx < monthsList.indexOf(startMonth);
+
+                                      return (
+                                        <option 
+                                          key={m} 
+                                          value={m}
+                                          disabled={!!isMonthBeforeStart}
+                                        >
+                                          {m}
+                                        </option>
+                                      );
+                                    })}
+                                  </select>
+                                  <select
+                                    value={endYear}
+                                    onChange={(e) => setEndYear(e.target.value)}
+                                    className="h-12 border border-slate-200 bg-white rounded-xl px-3 text-[#0B132B] focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 outline-none w-full"
+                                  >
+                                    <option value="">Année</option>
+                                    {["2023", "2024", "2025", "2026"].map((y) => {
+                                      const isYearBeforeStart = startYear && parseInt(y) < parseInt(startYear);
+                                      return (
+                                        <option 
+                                          key={y} 
+                                          value={y}
+                                          disabled={!!isYearBeforeStart}
+                                        >
+                                          {y}
+                                        </option>
+                                      );
+                                    })}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="flex justify-between items-center pt-2 text-sm font-semibold text-[#0B132B]">
+                                <span>Total des périodes d'assurance : {selectedMonthsCount} mois</span>
+                              </div>
+                              {autoMotoForm.formState.errors.periodeAssurance && (
+                                <p className="text-xs text-red-600 mt-1">{autoMotoForm.formState.errors.periodeAssurance.message}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex justify-between items-center pt-4 border-t border-slate-200 gap-4 mt-6">
+                    <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center mt-auto">
                       <Button
                         variant="ghost"
                         onClick={handleBackToStep1}
@@ -1007,101 +1011,103 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                     </div>
                   </form>
                 )}
-              </>
+              </div>
             ) : !isConfirmed ? (
-              <form onSubmit={handleFinalSubmit} className="space-y-6 w-full max-w-full overflow-hidden px-2 sm:px-4">
-                {error && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-                    {error}
-                  </div>
-                )}
+              <form onSubmit={handleFinalSubmit} className="flex flex-col flex-1 overflow-hidden h-full">
+                <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 pr-2">
+                  {error && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                      {error}
+                    </div>
+                  )}
 
-                {/* Top Container (Appel immédiat) */}
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-4">
-                  <p className="text-[#0B132B] font-semibold mb-4">Être rappelé rapidement (Appel immédiat)</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCallPreference("15min");
-                        setError(null);
-                      }}
-                      className={`h-12 rounded-lg font-semibold text-sm transition-all duration-200 cursor-pointer border ${
-                        callPreference === "15min"
-                          ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
-                          : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
-                      }`}
-                    >
-                      15 min
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCallPreference("30min");
-                        setError(null);
-                      }}
-                      className={`h-12 rounded-lg font-semibold text-sm transition-all duration-200 cursor-pointer border ${
-                        callPreference === "30min"
-                          ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
-                          : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
-                      }`}
-                    >
-                      30 min
-                    </button>
+                  {/* Top Container (Appel immédiat) */}
+                  <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-4">
+                    <p className="text-[#0B132B] font-semibold mb-4">Être rappelé rapidement (Appel immédiat)</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCallPreference("15min");
+                          setError(null);
+                        }}
+                        className={`h-12 rounded-lg font-semibold text-sm transition-all duration-200 cursor-pointer border ${
+                          callPreference === "15min"
+                            ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
+                            : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        15 min
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCallPreference("30min");
+                          setError(null);
+                        }}
+                        className={`h-12 rounded-lg font-semibold text-sm transition-all duration-200 cursor-pointer border ${
+                          callPreference === "30min"
+                            ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
+                            : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        30 min
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Bottom Container (Date ultérieure) */}
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                  <p className="text-[#0B132B] font-semibold mb-4">Ou choisir une date ultérieure</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input
-                      type="date"
-                      min={todayString}
-                      className="w-full h-12 px-4 border border-slate-300 rounded-lg text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
-                      value={callDate}
-                      onChange={(e) => {
-                        setCallDate(e.target.value);
-                        setCallPreference('custom');
-                      }}
-                    />
-                    <div className="flex gap-2">
-                      <select
+                  {/* Bottom Container (Date ultérieure) */}
+                  <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <p className="text-[#0B132B] font-semibold mb-4">Ou choisir une date ultérieure</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <input
+                        type="date"
+                        min={todayString}
                         className="w-full h-12 px-4 border border-slate-300 rounded-lg text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
-                        value={callHour}
+                        value={callDate}
                         onChange={(e) => {
-                          setCallHour(e.target.value);
+                          setCallDate(e.target.value);
                           setCallPreference('custom');
                         }}
-                      >
-                        <option value="" disabled>Heure</option>
-                        {HOURS.map(h => (
-                          <option key={h} value={h}>{h}h</option>
-                        ))}
-                      </select>
-                      <select
-                        className="w-full h-12 px-4 border border-slate-300 rounded-lg text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
-                        value={callMinute}
-                        onChange={(e) => {
-                          setCallMinute(e.target.value);
-                          setCallPreference('custom');
-                        }}
-                      >
-                        <option value="" disabled>Min</option>
-                        {callHour === "19" ? (
-                          <option value="00">00</option>
-                        ) : (
-                          MINUTES.map(m => (
-                            <option key={m} value={m}>{m}</option>
-                          ))
-                        )}
-                      </select>
+                      />
+                      <div className="flex gap-2">
+                        <select
+                          className="w-full h-12 px-4 border border-slate-300 rounded-lg text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
+                          value={callHour}
+                          onChange={(e) => {
+                            setCallHour(e.target.value);
+                            setCallPreference('custom');
+                          }}
+                        >
+                          <option value="" disabled>Heure</option>
+                          {HOURS.map(h => (
+                            <option key={h} value={h}>{h}h</option>
+                          ))}
+                        </select>
+                        <select
+                          className="w-full h-12 px-4 border border-slate-300 rounded-lg text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
+                          value={callMinute}
+                          onChange={(e) => {
+                            setCallMinute(e.target.value);
+                            setCallPreference('custom');
+                          }}
+                        >
+                          <option value="" disabled>Min</option>
+                          {callHour === "19" ? (
+                            <option value="00">00</option>
+                          ) : (
+                            MINUTES.map(m => (
+                              <option key={m} value={m}>{m}</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex justify-between items-center pt-4 border-t border-slate-200 gap-4 mt-6">
+                <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center mt-auto">
                   <button
                     type="button"
                     onClick={() => setIsSubmitted(false)}
@@ -1126,7 +1132,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                 </div>
               </form>
             ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-center space-y-6 w-full max-w-full overflow-hidden px-2 sm:px-4">
+              <div className="flex flex-col items-center justify-center py-6 text-center space-y-6 w-full max-w-full overflow-y-auto px-4 flex-1">
                 <div className="bg-[#D4AF37]/10 p-4 rounded-full text-[#D4AF37] animate-bounce">
                   <CheckCircle className="h-16 w-16" />
                 </div>
