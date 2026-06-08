@@ -400,9 +400,14 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
       setError("Veuillez choisir une durée pour le rappel immédiat.");
       return;
     }
-    if (scheduleMode === "future" && (!callDate || !callHour || !callMinute)) {
-      setError("Veuillez renseigner la date et l'heure souhaitées.");
-      return;
+    if (callPreference === "custom") {
+      if (!callDate || !callHour || !callMinute) {
+        setError("Veuillez sélectionner une date, une heure et les minutes pour le rappel.");
+        if (onShowToast) {
+          onShowToast("Veuillez sélectionner une date, une heure et les minutes pour le rappel.");
+        }
+        return;
+      }
     }
     setError(null);
     setIsSubmitting(true);
@@ -412,6 +417,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
       const payload = {
         ...(selectedChoice?.id === "trottinette" ? trottinetteForm.getValues() : autoMotoForm.getValues()),
         assuranceType: selectedChoice?.title,
+        vehicleType: selectedChoice?.title || "Général",
         callPreference,
         callDate,
         callTime: finalCallTime,

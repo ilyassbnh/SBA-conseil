@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { callPreference, callDate, callTime, ...leadData } = body;
+    const { callPreference, callDate, callTime, vehicleType, ...leadData } = body;
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const mailOptions = {
       from: '"SBA Conseil Lead" <leads@sba-conseil.fr>',
       to: "benhida.ilyass@gmail.com",
-      subject: "Nouveau Lead Assurance - SBA Conseil",
+      subject: `Nouveau Lead Assurance [${vehicleType || "Général"}] - SBA Conseil`,
       html: `
         <h3>Détails du Lead Assurance</h3>
         <p>Un nouveau lead a été soumis via le formulaire de devis SBA Conseil.</p>
