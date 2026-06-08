@@ -486,7 +486,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : handleClose())}>
-      <DialogContent className="sm:max-w-2xl bg-white border border-slate-200 p-6 sm:p-8 rounded-2xl overflow-y-auto max-h-[90vh] shadow-2xl text-slate-900">
+      <DialogContent className="w-full max-w-lg mx-auto bg-white border border-slate-200 p-4 py-6 sm:p-8 rounded-2xl overflow-y-auto max-h-[90vh] shadow-2xl text-slate-900">
         {step === 1 && (
           <div className="space-y-6">
             <DialogHeader className="text-center sm:text-left">
@@ -1054,7 +1054,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                 {/* Bottom Container (Date ultérieure) */}
                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
                   <p className="text-[#0B132B] font-semibold mb-4">Ou choisir une date ultérieure</p>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <input
                       type="date"
                       min={todayString}
