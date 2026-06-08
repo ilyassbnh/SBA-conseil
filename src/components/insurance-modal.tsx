@@ -61,7 +61,7 @@ const autoMotoSchema = z.object({
     .string({ message: "Le numéro d'immatriculation est requis." })
     .min(1, "Le numéro d'immatriculation est requis.")
     .regex(/^[A-Z]{2}-\d{3}-[A-Z]{2}$/i, "Format d'immatriculation invalide. Exemple: AA-123-AA"),
-  datePermis: z.string({ message: "La date d'obtention du permis est requise." }).regex(/^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/(19|20)\d\d$/, "Format invalide (JJ/MM/AAAA)"),
+  datePermis: z.string({ message: "La date d'obtention du permis est requise." }).min(1, "La date d'obtention du permis est requise."),
   categoriePermis: z.string({ message: "La catégorie du permis est requise." }).min(1, "La catégorie du permis est requise."),
   dejaAssure: z.enum(["Oui", "Non"], {
     message: "Veuillez indiquer si vous avez été assuré au cours des 3 dernières années.",
@@ -172,19 +172,30 @@ const choices: InsuranceChoice[] = [
   },
 ];
 
-// Formatting helper for registration plate AA-123-AA
-const formatImmatriculation = (val: string): string => {
-  const cleaned = val.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+const formatLicensePlate = (value: string) => {
+  // Remove all existing dashes and non-alphanumeric characters, force uppercase
+  const clean = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  
+  // Track length of clean alphanumeric string
+  const len = clean.length;
 
-  const lettersPart = cleaned.slice(0, 2).replace(/[^A-Z]/g, "");
-  const numbersPart = cleaned.slice(2, 5).replace(/[^0-9]/g, "");
-  const secondLettersPart = cleaned.slice(5, 7).replace(/[^A-Z]/g, "");
-
-  let formatted = lettersPart;
-  if (numbersPart) formatted += `-${numbersPart}`;
-  if (secondLettersPart) formatted += `-${secondLettersPart}`;
-
-  return formatted;
+  if (len === 0) return '';
+  if (len <= 2) {
+    // If exactly 2 characters, append the dash immediately
+    return len === 2 ? `${clean}-` : clean;
+  }
+  if (len <= 5) {
+    // If exactly 5 characters (2 letters + 3 numbers), append the second dash immediately
+    const part1 = clean.slice(0, 2);
+    const part2 = clean.slice(2, len);
+    return len === 5 ? `${part1}-${part2}-` : `${part1}-${part2}`;
+  }
+  
+  // Fully formatted or full typing limit (AA-123-AA)
+  const part1 = clean.slice(0, 2);
+  const part2 = clean.slice(2, 5);
+  const part3 = clean.slice(5, 7);
+  return `${part1}-${part2}-${part3}`;
 };
 
 // Formatting helper for date DD/MM/YYYY
@@ -711,7 +722,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                           placeholder="AA-123-AA"
                           maxLength={9}
                           onChange={(e) => {
-                            const formatted = formatImmatriculation(e.target.value);
+                            const formatted = formatLicensePlate(e.target.value);
                             e.target.value = formatted;
                             onImmatriculationChange(e);
                           }}
@@ -745,15 +756,9 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                           </Label>
                           <Input
                             id="datePermis-am"
-                            type="text"
-                            placeholder="DD/MM/YYYY"
-                            maxLength={10}
-                            onChange={(e) => {
-                              const formatted = formatDate(e.target.value);
-                              e.target.value = formatted;
-                              onDatePermisChange(e);
-                            }}
-                            {...datePermisRest}
+                            type="date"
+                            max={new Date().toISOString().split('T')[0]}
+                            {...autoMotoForm.register("datePermis")}
                             className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                           />
                           {autoMotoForm.formState.errors.datePermis && (
