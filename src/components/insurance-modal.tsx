@@ -23,6 +23,7 @@ import {
   Heart,
   Shield,
   Wrench,
+  X,
 } from "lucide-react";
 
 interface InsuranceModalProps {
@@ -486,8 +487,21 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : handleClose())}>
-      <DialogContent className="w-full max-w-lg mx-auto bg-white rounded-xl shadow-xl flex flex-col max-h-[90vh] md:max-h-none border border-slate-200 text-slate-900 p-0 overflow-hidden">
-        {step === 1 && (
+      <DialogContent
+        showCloseButton={false}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 !translate-x-0 !translate-y-0 !top-0 !left-0 !max-w-none rounded-none bg-transparent ring-0 border-none shadow-none p-0 overflow-hidden outline-none"
+      >
+        <div className="w-full max-w-lg bg-white rounded-xl shadow-xl flex flex-col h-auto max-h-[95vh] md:max-h-[85vh] border border-slate-200 text-slate-900 overflow-hidden relative">
+          <button
+            onClick={handleClose}
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors z-[60]"
+            type="button"
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Fermer</span>
+          </button>
+
+          {step === 1 && (
           <div className="space-y-6 p-6 sm:p-8 overflow-y-auto flex-1 flex flex-col">
             <DialogHeader className="text-center sm:text-left">
               <DialogTitle className="text-2xl font-bold text-[#0B132B]">
@@ -567,7 +581,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
 
                 {selectedChoice.id === "trottinette" ? (
                   <form onSubmit={trottinetteForm.handleSubmit(onTrottinetteSubmit)} className="flex flex-col flex-1 overflow-hidden h-full">
-                    <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 pr-2">
+                    <div className="flex-1 overflow-y-auto max-h-[calc(95vh-140px)] md:max-h-[calc(85vh-140px)] px-6 py-4 space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="nom-t" className="text-sm font-semibold text-[#0B132B]">
@@ -656,7 +670,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                       </div>
                     </div>
 
-                    <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center mt-auto">
+                    <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center shrink-0">
                       <Button
                         variant="ghost"
                         onClick={handleBackToStep1}
@@ -687,7 +701,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                   </form>
                 ) : (
                   <form onSubmit={autoMotoForm.handleSubmit(onAutoMotoSubmit)} className="flex flex-col flex-1 overflow-hidden h-full">
-                    <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 pr-2">
+                    <div className="flex-1 overflow-y-auto max-h-[calc(95vh-140px)] md:max-h-[calc(85vh-140px)] px-6 py-4 space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="immatriculation-am" className="text-sm font-semibold text-[#0B132B]">
                           Numéro d'immatriculation *
@@ -981,7 +995,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                       </div>
                     </div>
 
-                    <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center mt-auto">
+                    <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center shrink-0">
                       <Button
                         variant="ghost"
                         onClick={handleBackToStep1}
@@ -1014,7 +1028,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
               </div>
             ) : !isConfirmed ? (
               <form onSubmit={handleFinalSubmit} className="flex flex-col flex-1 overflow-hidden h-full">
-                <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 pr-2">
+                <div className="flex-1 overflow-y-auto max-h-[calc(95vh-140px)] md:max-h-[calc(85vh-140px)] px-6 py-4 space-y-4">
                   {error && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
                       {error}
@@ -1107,7 +1121,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                 </div>
 
                 {/* Footer Actions */}
-                <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center mt-auto">
+                <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsSubmitted(false)}
@@ -1176,6 +1190,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
             )}
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );
