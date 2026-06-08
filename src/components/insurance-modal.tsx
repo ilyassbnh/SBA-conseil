@@ -721,12 +721,57 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                           id="immatriculation-am"
                           placeholder="AA-123-AA"
                           maxLength={9}
-                          onChange={(e) => {
-                            const formatted = formatLicensePlate(e.target.value);
-                            e.target.value = formatted;
-                            onImmatriculationChange(e);
-                          }}
                           {...immatriculationRest}
+                          onChange={(e) => {
+                            const input = e.target;
+                            let raw = input.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+                            
+                            // Track delete action
+                            const isDeleting = (e.nativeEvent as any).inputType === 'deleteContentBackward';
+                            
+                            // Strip dashes to evaluate raw character alignment
+                            let clean = raw.replace(/-/g, '');
+                            
+                            let formatted = '';
+                            
+                            // Segment 1: Enforce up to 2 letters only at the start
+                            let seg1 = clean.slice(0, 2).replace(/[^A-Z]/g, '');
+                            formatted += seg1;
+                            
+                            // Trigger first dash only if segment 1 is fully completed
+                            if (seg1.length === 2) {
+                              if (isDeleting && raw === `${seg1}-`) {
+                                // Allow user to break back past the dash smoothly
+                                autoMotoForm.setValue('immatriculation', seg1.slice(0, 1), { shouldValidate: true });
+                                return;
+                              }
+                              formatted += '-';
+                              
+                              // Segment 2: Enforce up to 3 numbers in the middle
+                              let remaining = clean.slice(seg1.length);
+                              let seg2 = remaining.slice(0, 3).replace(/[^0-9]/g, '');
+                              formatted += seg2;
+                              
+                              // Trigger second dash only if segment 2 is fully completed
+                              if (seg2.length === 3) {
+                                if (isDeleting && raw === `${seg1}-${seg2}-`) {
+                                  autoMotoForm.setValue('immatriculation', `${seg1}-${seg2.slice(0, 2)}`, { shouldValidate: true });
+                                  return;
+                                }
+                                formatted += '-';
+                                
+                                // Segment 3: Enforce up to 2 final letters
+                                let finalRemaining = remaining.slice(seg2.length);
+                                let seg3 = finalRemaining.slice(0, 2).replace(/[^A-Z]/g, '');
+                                formatted += seg3;
+                              }
+                            } else {
+                              // If the first two characters are not pure letters, reject any extra content completely
+                              formatted = seg1;
+                            }
+                            
+                            autoMotoForm.setValue('immatriculation', formatted, { shouldValidate: true });
+                          }}
                           className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 uppercase tracking-wider"
                         />
                         {autoMotoForm.formState.errors.immatriculation && (
