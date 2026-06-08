@@ -199,13 +199,30 @@ const formatDate = (val: string): string => {
   return formatted;
 };
 
-const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-const MINUTES = ['00', '10', '20', '30', '40', '50'];
+const HOURS = Array.from({ length: 11 }, (_, i) => String(i + 9).padStart(2, '0'));
+const MINUTES = ['00', '15', '30', '45'];
 
 const monthsList = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
 ];
+
+// Formatting helper for French telephone format (+33 followed by exactly 9 digits)
+const formatTelephone = (val: string): string => {
+  const digitsOnly = val.replace(/\D/g, "");
+  let remainingDigits = "";
+  if (digitsOnly.startsWith("33")) {
+    remainingDigits = digitsOnly.slice(2);
+  } else {
+    if (digitsOnly.startsWith("0")) {
+      remainingDigits = digitsOnly.slice(1);
+    } else {
+      remainingDigits = digitsOnly;
+    }
+  }
+  remainingDigits = remainingDigits.slice(0, 9);
+  return "+33 " + remainingDigits.replace(/(\d)(\d{2})(\d{2})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5").trim();
+};
 
 export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowToast }: InsuranceModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
@@ -230,6 +247,12 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
   const [endYear, setEndYear] = useState<string>("");
 
   useEffect(() => {
+    if (callHour === "19") {
+      setCallMinute("00");
+    }
+  }, [callHour]);
+
+  useEffect(() => {
     if (startMonth && startYear && endMonth && endYear) {
       const startVal = parseInt(startYear) * 12 + monthsList.indexOf(startMonth);
       const endVal = parseInt(endYear) * 12 + monthsList.indexOf(endMonth);
@@ -248,7 +271,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
       email: "",
       age: "",
       codePostal: "",
-      telephone: "",
+      telephone: "+33 ",
     },
   });
 
@@ -258,7 +281,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
     defaultValues: {
       nom: "",
       email: "",
-      telephone: "",
+      telephone: "+33 ",
       immatriculation: "",
       datePermis: "",
       categoriePermis: "",
@@ -323,8 +346,8 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
       setStartYear("");
       setEndMonth("");
       setEndYear("");
-      trottinetteForm.reset();
-      autoMotoForm.reset();
+      trottinetteForm.reset({ telephone: "+33 " });
+      autoMotoForm.reset({ telephone: "+33 " });
       setError(null);
     }, 200);
   };
@@ -363,6 +386,8 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
 
   const { onChange: onImmatriculationChange, ...immatriculationRest } = autoMotoForm.register("immatriculation");
   const { onChange: onDatePermisChange, ...datePermisRest } = autoMotoForm.register("datePermis");
+  const { onChange: onTelephoneChangeA, ...telephoneRestA } = trottinetteForm.register("telephone");
+  const { onChange: onTelephoneChangeB, ...telephoneRestB } = autoMotoForm.register("telephone");
 
   const dejaAssureVal = autoMotoForm.watch("dejaAssure");
 
@@ -457,6 +482,8 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
     }
   };
 
+  const todayString = new Date().toISOString().split("T")[0];
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : handleClose())}>
       <DialogContent className="sm:max-w-2xl bg-white border border-slate-200 p-6 sm:p-8 rounded-2xl overflow-y-auto max-h-[90vh] shadow-2xl text-slate-900">
@@ -515,7 +542,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
               <DialogHeader className="flex-1">
                 <DialogTitle className="text-2xl font-bold text-[#0B132B]">
                   {isConfirmed
-                    ? "Rendez-vous confirmé !"
+                    ? "Rendez-vous confirmed !"
                     : isSubmitted
                     ? "Dossier pré-validé. Réservez votre appel."
                     : `Formulaire Devis - ${selectedChoice.title}`}
@@ -614,7 +641,12 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                       <Input
                         id="telephone-t"
                         placeholder="+33 6 12 34 56 78"
-                        {...trottinetteForm.register("telephone")}
+                        onChange={(e) => {
+                          const formatted = formatTelephone(e.target.value);
+                          e.target.value = formatted;
+                          onTelephoneChangeA(e);
+                        }}
+                        {...telephoneRestA}
                         className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                       />
                       {trottinetteForm.formState.errors.telephone && (
@@ -766,7 +798,12 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                       <Input
                         id="telephone-am"
                         placeholder="+33 6 12 34 56 78"
-                        {...autoMotoForm.register("telephone")}
+                        onChange={(e) => {
+                          const formatted = formatTelephone(e.target.value);
+                          e.target.value = formatted;
+                          onTelephoneChangeB(e);
+                        }}
+                        {...telephoneRestB}
                         className="w-full box-border h-12 text-base rounded-xl border-slate-200 bg-slate-50 text-[#0B132B] placeholder:text-slate-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20"
                       />
                       {autoMotoForm.formState.errors.telephone && (
@@ -1020,6 +1057,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                   <div className="grid grid-cols-2 gap-4">
                     <input
                       type="date"
+                      min={todayString}
                       className="w-full h-12 px-4 border border-slate-300 rounded-lg text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
                       value={callDate}
                       onChange={(e) => {
@@ -1050,9 +1088,13 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                         }}
                       >
                         <option value="" disabled>Min</option>
-                        {MINUTES.map(m => (
-                          <option key={m} value={m}>{m}</option>
-                        ))}
+                        {callHour === "19" ? (
+                          <option value="00">00</option>
+                        ) : (
+                          MINUTES.map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))
+                        )}
                       </select>
                     </div>
                   </div>
@@ -1091,7 +1133,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
 
                 <div className="space-y-2 max-w-md">
                   <DialogTitle className="text-2xl font-bold text-[#0B132B]">
-                    Rendez-vous confirmé. À très vite !
+                    Rendez-vous confirmed. À très vite !
                   </DialogTitle>
                   <DialogDescription className="text-slate-600 leading-relaxed text-sm">
                     Merci <span className="font-semibold text-slate-955">{submittedInfo?.nom}</span>. Votre demande de devis pour l'assurance <span className="font-semibold text-[#D4AF37]">{selectedChoice.title}</span> est pré-validée.
