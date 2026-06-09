@@ -31,6 +31,7 @@ interface InsuranceModalProps {
   onOpenChange: (open: boolean) => void;
   defaultChoiceId?: string;
   onShowToast?: (msg: string) => void;
+  onSelectSante?: () => void;
 }
 
 type InsuranceChoice = {
@@ -145,7 +146,7 @@ const choices: InsuranceChoice[] = [
   {
     id: "moto",
     title: "Moto",
-    description: "Garanties conducteur, dommages et vol adaptées pour tous les motards et cylindrées.",
+    description: "Garanties conducteur, dommages et vol adaptées pour tous les motards and cylindrées.",
     icon: MotoIcon,
     iconColor: "text-[#D4AF37]",
   },
@@ -236,7 +237,7 @@ const formatTelephone = (val: string): string => {
   return "+33 " + remainingDigits.replace(/(\d)(\d{2})(\d{2})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5").trim();
 };
 
-export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowToast }: InsuranceModalProps) {
+export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowToast, onSelectSante }: InsuranceModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedChoice, setSelectedChoice] = useState<InsuranceChoice | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -307,7 +308,13 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
     if (isOpen && defaultChoiceId) {
       const found = choices.find((c) => c.id === defaultChoiceId);
       if (found) {
-        if (found.id === "sante" || found.id === "emprunteur" || found.id === "fad") {
+        if (found.id === "sante") {
+          if (onSelectSante) {
+            onSelectSante();
+          }
+          return;
+        }
+        if (found.id === "emprunteur" || found.id === "fad") {
           if (onShowToast) {
             onShowToast("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
           } else {
@@ -320,10 +327,16 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
         setStep(2);
       }
     }
-  }, [isOpen, defaultChoiceId, onOpenChange, onShowToast]);
+  }, [isOpen, defaultChoiceId, onOpenChange, onShowToast, onSelectSante]);
 
   const handleChoiceSelect = (choice: InsuranceChoice) => {
-    if (choice.id === "sante" || choice.id === "emprunteur" || choice.id === "fad") {
+    if (choice.id === "sante") {
+      if (onSelectSante) {
+        onSelectSante();
+      }
+      return;
+    }
+    if (choice.id === "emprunteur" || choice.id === "fad") {
       if (onShowToast) {
         onShowToast("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
       } else {
@@ -500,9 +513,13 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : handleClose())}>
       <DialogContent
         showCloseButton={false}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 !translate-x-0 !translate-y-0 !top-0 !left-0 !max-w-none rounded-none bg-transparent ring-0 border-none shadow-none p-0 overflow-hidden outline-none"
+        onClick={handleClose}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 !translate-x-0 !translate-y-0 !top-0 !left-0 !max-w-none rounded-none bg-transparent ring-0 border-none shadow-none p-0 overflow-hidden outline-none cursor-pointer"
       >
-        <div className="w-full max-w-lg bg-white rounded-xl shadow-xl flex flex-col h-auto max-h-[95vh] md:max-h-[85vh] border border-slate-200 text-slate-900 overflow-hidden relative">
+        <div 
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-lg bg-white rounded-xl shadow-xl flex flex-col h-auto max-h-[95vh] md:max-h-[85vh] border border-slate-200 text-slate-900 overflow-hidden relative cursor-default"
+        >
           <button
             onClick={handleClose}
             className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors z-[60]"

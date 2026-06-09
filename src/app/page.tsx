@@ -220,16 +220,16 @@ export default function Home() {
     "Sans emploi",
     "Retraité ancien salarié",
     "Fonctionnaire d'état",
-    "(Travailleurs Non Salariés, Autoentrepreneur)",
+    "Travailleurs Non Salariés, Autoentrepreneur",
     "Fonctionnaire territorial",
     "Fonctionnaire hospitalier",
     "Étudiant",
     "Alsace-Moselle",
-    "(Travailleurs Non Salariés, Profession libérale)",
+    "Travailleurs Non Salariés, Profession libérale",
     "Retraité ancien travailleur non salarié",
-    "(Travailleurs Non Salariés, Chef d'entreprise)",
-    "(Travailleurs Non Salariés, Artisan)",
-    "(Travailleurs Non Salariés, Commerçant)",
+    "Travailleurs Non Salariés, Chef d'entreprise",
+    "Travailleurs Non Salariés, Artisan",
+    "Travailleurs Non Salariés, Commerçant",
     "Salarié Agricole",
     "Exploitant Agricole",
   ];
@@ -778,15 +778,19 @@ export default function Home() {
         onOpenChange={setIsModalOpen}
         defaultChoiceId={activeChoiceId}
         onShowToast={showToastNotification}
+        onSelectSante={() => {
+          setIsModalOpen(false);
+          handleOpenModal("sante");
+        }}
       />
 
       {/* Health Insurance (Mutuelle) Multi-step Modal */}
       {isMutuelleOpen && (
-        <div 
+        <div
           onClick={() => setIsMutuelleOpen(false)}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-hidden"
         >
-          <div 
+          <div
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-lg bg-white rounded-xl shadow-xl flex flex-col h-auto max-h-[95vh] md:max-h-[85vh] border border-slate-200 text-slate-900 overflow-hidden relative"
           >
@@ -827,8 +831,8 @@ export default function Home() {
 
                   {/* Progress Bar */}
                   <div className="h-1.5 w-full bg-slate-200 mt-4 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-[#D4AF37] transition-all duration-300" 
+                    <div
+                      className="h-full bg-[#D4AF37] transition-all duration-300"
                       style={{ width: `${(mutuelleStep / 7) * 100}%` }}
                     />
                   </div>
@@ -853,11 +857,10 @@ export default function Home() {
                             setGenre("Femme");
                             setMutuelleError(null);
                           }}
-                          className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200 ${
-                            genre === "Femme"
+                          className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200 ${genre === "Femme"
                               ? "border-[#D4AF37] bg-[#D4AF37]/5 text-[#0B132B]"
                               : "border-slate-200 hover:border-slate-300 text-slate-600"
-                          }`}
+                            }`}
                         >
                           <span className="text-3xl mb-2">👩</span>
                           <span className="font-semibold">Une femme</span>
@@ -868,11 +871,10 @@ export default function Home() {
                             setGenre("Homme");
                             setMutuelleError(null);
                           }}
-                          className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200 ${
-                            genre === "Homme"
+                          className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200 ${genre === "Homme"
                               ? "border-[#D4AF37] bg-[#D4AF37]/5 text-[#0B132B]"
                               : "border-slate-200 hover:border-slate-300 text-slate-600"
-                          }`}
+                            }`}
                         >
                           <span className="text-3xl mb-2">👨</span>
                           <span className="font-semibold">Un homme</span>
@@ -898,11 +900,10 @@ export default function Home() {
                               setQuiAssurer(option.id);
                               setMutuelleError(null);
                             }}
-                            className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                              quiAssurer === option.id
+                            className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 ${quiAssurer === option.id
                                 ? "border-[#D4AF37] bg-[#D4AF37]/5 text-[#0B132B]"
                                 : "border-slate-200 hover:border-slate-300 text-slate-700"
-                            }`}
+                              }`}
                           >
                             <span className="text-2xl">{option.icon}</span>
                             <span className="font-semibold">{option.label}</span>
@@ -919,9 +920,8 @@ export default function Home() {
                         {activities.map((act) => (
                           <label
                             key={act}
-                            className={`flex items-center gap-3 p-3 text-sm cursor-pointer hover:bg-slate-100/80 transition-colors ${
-                              activite === act ? "bg-[#D4AF37]/10" : ""
-                            }`}
+                            className={`flex items-center gap-3 p-3 text-sm cursor-pointer hover:bg-slate-100/80 transition-colors ${activite === act ? "bg-[#D4AF37]/10" : ""
+                              }`}
                           >
                             <input
                               type="radio"
@@ -1037,7 +1037,7 @@ export default function Home() {
                   {mutuelleStep === 7 && (
                     <div className="space-y-4">
                       <p className="text-sm font-semibold text-[#0B132B]">Étape 7 : Planifier votre appel</p>
-                      
+
                       {/* Top Container (Appel immédiat) */}
                       <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
                         <p className="text-[#0B132B] font-semibold text-xs mb-3 uppercase tracking-wider">Être rappelé rapidement (Appel immédiat)</p>
@@ -1048,11 +1048,10 @@ export default function Home() {
                               setCallPreference("15min");
                               setMutuelleError(null);
                             }}
-                            className={`h-11 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer border ${
-                              callPreference === "15min"
+                            className={`h-11 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer border ${callPreference === "15min"
                                 ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
                                 : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
-                            }`}
+                              }`}
                           >
                             15 min
                           </button>
@@ -1062,11 +1061,10 @@ export default function Home() {
                               setCallPreference("30min");
                               setMutuelleError(null);
                             }}
-                            className={`h-11 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer border ${
-                              callPreference === "30min"
+                            className={`h-11 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer border ${callPreference === "30min"
                                 ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
                                 : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
-                            }`}
+                              }`}
                           >
                             30 min
                           </button>
