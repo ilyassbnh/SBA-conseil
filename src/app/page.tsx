@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { InsuranceModal } from "@/components/insurance-modal";
@@ -16,6 +16,10 @@ import {
   Check,
   Heart,
   Wrench,
+  X,
+  ArrowLeft,
+  Loader2,
+  CheckCircle,
 } from "lucide-react";
 
 // Custom SVG Scooter Icon
@@ -108,10 +112,52 @@ const LogoCheckedDocumentIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const formatTelephone = (val: string): string => {
+  const digitsOnly = val.replace(/\D/g, "");
+  let remainingDigits = "";
+  if (digitsOnly.startsWith("33")) {
+    remainingDigits = digitsOnly.slice(2);
+  } else {
+    if (digitsOnly.startsWith("0")) {
+      remainingDigits = digitsOnly.slice(1);
+    } else {
+      remainingDigits = digitsOnly;
+    }
+  }
+  remainingDigits = remainingDigits.slice(0, 9);
+  return "+33 " + remainingDigits.replace(/(\d)(\d{2})(\d{2})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5").trim();
+};
+
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeChoiceId, setActiveChoiceId] = useState<string | undefined>(undefined);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Health Insurance (Mutuelle) Modal State
+  const [isMutuelleOpen, setIsMutuelleOpen] = useState(false);
+  const [mutuelleStep, setMutuelleStep] = useState(1);
+  const [isMutuelleSubmitting, setIsMutuelleSubmitting] = useState(false);
+  const [mutuelleSuccess, setMutuelleSuccess] = useState(false);
+
+  // Health Insurance Form Fields State
+  const [genre, setGenre] = useState<string | null>(null);
+  const [quiAssurer, setQuiAssurer] = useState<string | null>(null);
+  const [activite, setActivite] = useState<string | null>(null);
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
+  const [dateNaissance, setDateNaissance] = useState("");
+  const [adresse, setAdresse] = useState("");
+  const [codePostal, setCodePostal] = useState("");
+  const [telephone, setTelephone] = useState("+33 ");
+  const [email, setEmail] = useState("");
+
+  // Step 7 Scheduling State
+  const [callPreference, setCallPreference] = useState<"15min" | "30min" | "custom" | null>(null);
+  const [callDate, setCallDate] = useState("");
+  const [callHour, setCallHour] = useState("");
+  const [callMinute, setCallMinute] = useState("");
+
+  const [mutuelleError, setMutuelleError] = useState<string | null>(null);
 
   const showToastNotification = (msg: string) => {
     setToast(msg);
@@ -119,12 +165,197 @@ export default function Home() {
   };
 
   const handleOpenModal = (choiceId?: string) => {
-    if (choiceId === "sante" || choiceId === "emprunteur" || choiceId === "fad") {
+    if (choiceId === "sante") {
+      setMutuelleStep(1);
+      setGenre(null);
+      setQuiAssurer(null);
+      setActivite(null);
+      setPrenom("");
+      setNom("");
+      setDateNaissance("");
+      setAdresse("");
+      setCodePostal("");
+      setTelephone("+33 ");
+      setEmail("");
+      setCallPreference(null);
+      setCallDate("");
+      setCallHour("");
+      setCallMinute("");
+      setMutuelleError(null);
+      setMutuelleSuccess(false);
+      setIsMutuelleOpen(true);
+      return;
+    }
+    if (choiceId === "emprunteur" || choiceId === "fad") {
       showToastNotification("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
       return;
     }
     setActiveChoiceId(choiceId);
     setIsModalOpen(true);
+  };
+
+  const getStepTitle = (s: number) => {
+    switch (s) {
+      case 1:
+        return "Vous êtes ?";
+      case 2:
+        return "Qui souhaitez-vous assurer ?";
+      case 3:
+        return "Quelle est votre activité ?";
+      case 4:
+        return "Votre profil";
+      case 5:
+        return "Votre adresse";
+      case 6:
+        return "Vos Coordonnées";
+      case 7:
+        return "Planifier votre appel";
+      default:
+        return "";
+    }
+  };
+
+  const activities = [
+    "Salarié",
+    "Sans emploi",
+    "Retraité ancien salarié",
+    "Fonctionnaire d'état",
+    "(Travailleurs Non Salariés, Autoentrepreneur)",
+    "Fonctionnaire territorial",
+    "Fonctionnaire hospitalier",
+    "Étudiant",
+    "Alsace-Moselle",
+    "(Travailleurs Non Salariés, Profession libérale)",
+    "Retraité ancien travailleur non salarié",
+    "(Travailleurs Non Salariés, Chef d'entreprise)",
+    "(Travailleurs Non Salariés, Artisan)",
+    "(Travailleurs Non Salariés, Commerçant)",
+    "Salarié Agricole",
+    "Exploitant Agricole",
+  ];
+
+  const minAgeDate = new Date(new Date().setFullYear(new Date().getFullYear() - 25)).toISOString().split('T')[0];
+
+  const handleNextStep = () => {
+    setMutuelleError(null);
+    if (mutuelleStep === 1) {
+      if (!genre) {
+        setMutuelleError("Veuillez sélectionner votre genre pour continuer.");
+        return;
+      }
+    } else if (mutuelleStep === 2) {
+      if (!quiAssurer) {
+        setMutuelleError("Veuillez sélectionner qui vous souhaitez assurer.");
+        return;
+      }
+    } else if (mutuelleStep === 3) {
+      if (!activite) {
+        setMutuelleError("Veuillez sélectionner votre activité.");
+        return;
+      }
+    } else if (mutuelleStep === 4) {
+      if (!prenom.trim()) {
+        setMutuelleError("Le prénom est requis.");
+        return;
+      }
+      if (!nom.trim()) {
+        setMutuelleError("Le nom est requis.");
+        return;
+      }
+      if (!dateNaissance) {
+        setMutuelleError("La date de naissance est requise.");
+        return;
+      }
+      if (dateNaissance > minAgeDate) {
+        setMutuelleError("Vous devez être âgé d'au moins 25 ans.");
+        return;
+      }
+    } else if (mutuelleStep === 5) {
+      if (!adresse.trim()) {
+        setMutuelleError("L'adresse est requise.");
+        return;
+      }
+      if (!/^\d{5}$/.test(codePostal)) {
+        setMutuelleError("Le code postal doit contenir exactement 5 chiffres.");
+        return;
+      }
+    } else if (mutuelleStep === 6) {
+      const cleanPhone = telephone.replace(/\D/g, "");
+      if (!cleanPhone || cleanPhone.length < 11) {
+        setMutuelleError("Le numéro de téléphone doit être valide (Country code + 9 chiffres).");
+        return;
+      }
+      if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setMutuelleError("Une adresse e-mail valide est requise.");
+        return;
+      }
+    }
+    setMutuelleStep(mutuelleStep + 1);
+  };
+
+  const handlePrevStep = () => {
+    setMutuelleError(null);
+    if (mutuelleStep > 1) {
+      setMutuelleStep(mutuelleStep - 1);
+    }
+  };
+
+  const handleMutuelleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMutuelleError(null);
+
+    if (!callPreference) {
+      setMutuelleError("Veuillez choisir une option de rappel.");
+      return;
+    }
+
+    if (callPreference === "custom") {
+      if (!callDate || !callHour || !callMinute) {
+        setMutuelleError("Veuillez sélectionner une date, une heure et les minutes pour le rappel.");
+        return;
+      }
+    }
+
+    setIsMutuelleSubmitting(true);
+
+    try {
+      const finalCallTime = callHour && callMinute ? `${callHour}:${callMinute}` : "";
+      const payload = {
+        genre,
+        quiAssurer,
+        activite,
+        nom: `${prenom} ${nom}`,
+        dateNaissance,
+        adresse,
+        codePostal,
+        telephone,
+        email,
+        callPreference,
+        callDate,
+        callTime: finalCallTime,
+        assuranceType: "Santé / Mutuelle",
+        vehicleType: "Santé",
+        adminEmail: "benhida.ilyass@gmail.com",
+      };
+
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Une erreur est survenue lors de l'envoi.");
+      }
+
+      setMutuelleSuccess(true);
+    } catch (err: any) {
+      setMutuelleError(err.message || "Une erreur est survenue.");
+    } finally {
+      setIsMutuelleSubmitting(false);
+    }
   };
 
   const vehicleOffers = [
@@ -236,6 +467,10 @@ export default function Home() {
       rating: 5,
     },
   ];
+
+  const todayString = new Date().toISOString().split("T")[0];
+  const HOURS = Array.from({ length: 11 }, (_, i) => String(i + 9).padStart(2, '0'));
+  const MINUTES = ['00', '15', '30', '45'];
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900">
@@ -376,12 +611,10 @@ export default function Home() {
                       </p>
                     </div>
                     <Button
-                      onClick={() => {
-                        showToastNotification("Ce service n'est pas encore disponible en ligne. Veuillez nous contacter.");
-                      }}
+                      onClick={() => handleOpenModal(offer.id)}
                       className="w-full bg-[#D4AF37] hover:bg-[#c39e2e] text-white rounded-xl py-3 font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 group/btn cursor-pointer"
                     >
-                      Nous contacter
+                      {offer.id === "sante" ? "Obtenir mon devis" : "Nous contacter"}
                       <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
                     </Button>
                   </div>
@@ -546,6 +779,416 @@ export default function Home() {
         defaultChoiceId={activeChoiceId}
         onShowToast={showToastNotification}
       />
+
+      {/* Health Insurance (Mutuelle) Multi-step Modal */}
+      {isMutuelleOpen && (
+        <div 
+          onClick={() => setIsMutuelleOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-hidden"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg bg-white rounded-xl shadow-xl flex flex-col h-auto max-h-[95vh] md:max-h-[85vh] border border-slate-200 text-slate-900 overflow-hidden relative"
+          >
+            <button
+              onClick={() => setIsMutuelleOpen(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors z-[60]"
+              type="button"
+            >
+              <X className="h-5 w-5" />
+              <span className="sr-only">Fermer</span>
+            </button>
+
+            {!mutuelleSuccess ? (
+              <div className="flex flex-col flex-1 overflow-hidden">
+                {/* Header & Progress */}
+                <div className="p-6 pb-2 sm:p-8 sm:pb-2">
+                  <div className="flex items-center gap-3">
+                    {mutuelleStep > 1 && (
+                      <Button
+                        variant="ghost"
+                        onClick={handlePrevStep}
+                        className="text-slate-500 hover:text-[#0B132B] hover:bg-slate-100 rounded-xl h-10 w-10 p-0"
+                        type="button"
+                      >
+                        <ArrowLeft className="h-5 w-5" />
+                        <span className="sr-only">Retour</span>
+                      </Button>
+                    )}
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-[#0B132B]">
+                        Devis Santé Mutuelle
+                      </h3>
+                      <p className="text-sm text-slate-500">
+                        Étape {mutuelleStep} : {getStepTitle(mutuelleStep)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="h-1.5 w-full bg-slate-200 mt-4 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#D4AF37] transition-all duration-300" 
+                      style={{ width: `${(mutuelleStep / 7) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Error Banner */}
+                {mutuelleError && (
+                  <div className="mx-6 sm:mx-8 my-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                    {mutuelleError}
+                  </div>
+                )}
+
+                {/* Scrollable Form Content */}
+                <div className="flex-1 overflow-y-auto px-6 py-4 sm:px-8">
+                  {mutuelleStep === 1 && (
+                    <div className="space-y-4">
+                      <p className="text-sm font-medium text-slate-600">Choisissez votre genre :</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGenre("Femme");
+                            setMutuelleError(null);
+                          }}
+                          className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200 ${
+                            genre === "Femme"
+                              ? "border-[#D4AF37] bg-[#D4AF37]/5 text-[#0B132B]"
+                              : "border-slate-200 hover:border-slate-300 text-slate-600"
+                          }`}
+                        >
+                          <span className="text-3xl mb-2">👩</span>
+                          <span className="font-semibold">Une femme</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGenre("Homme");
+                            setMutuelleError(null);
+                          }}
+                          className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200 ${
+                            genre === "Homme"
+                              ? "border-[#D4AF37] bg-[#D4AF37]/5 text-[#0B132B]"
+                              : "border-slate-200 hover:border-slate-300 text-slate-600"
+                          }`}
+                        >
+                          <span className="text-3xl mb-2">👨</span>
+                          <span className="font-semibold">Un homme</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {mutuelleStep === 2 && (
+                    <div className="space-y-4">
+                      <p className="text-sm font-medium text-slate-600">Personnes à assurer :</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {[
+                          { id: "Vous", label: "Vous", icon: "👤" },
+                          { id: "Votre couple", label: "Votre couple", icon: "👥" },
+                          { id: "Vos enfants et vous", label: "Vos enfants et vous", icon: "🧑‍👩‍👧" },
+                          { id: "Toute la famille", label: "Toute la famille", icon: "👨‍👩‍👧‍👦" },
+                        ].map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => {
+                              setQuiAssurer(option.id);
+                              setMutuelleError(null);
+                            }}
+                            className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                              quiAssurer === option.id
+                                ? "border-[#D4AF37] bg-[#D4AF37]/5 text-[#0B132B]"
+                                : "border-slate-200 hover:border-slate-300 text-slate-700"
+                            }`}
+                          >
+                            <span className="text-2xl">{option.icon}</span>
+                            <span className="font-semibold">{option.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {mutuelleStep === 3 && (
+                    <div className="space-y-4">
+                      <p className="text-sm font-medium text-slate-600">Sélectionnez votre régime ou activité :</p>
+                      <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-slate-50">
+                        {activities.map((act) => (
+                          <label
+                            key={act}
+                            className={`flex items-center gap-3 p-3 text-sm cursor-pointer hover:bg-slate-100/80 transition-colors ${
+                              activite === act ? "bg-[#D4AF37]/10" : ""
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="activite"
+                              value={act}
+                              checked={activite === act}
+                              onChange={() => {
+                                setActivite(act);
+                                setMutuelleError(null);
+                              }}
+                              className="h-4.5 w-4.5 border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
+                            />
+                            <span className={`font-medium ${activite === act ? "text-[#0B132B] font-semibold" : "text-slate-700"}`}>
+                              {act}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {mutuelleStep === 4 && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-[#0B132B] uppercase tracking-wider">Prénom *</label>
+                          <input
+                            type="text"
+                            placeholder="Jean"
+                            value={prenom}
+                            onChange={(e) => setPrenom(e.target.value.replace(/[^A-Za-zÀ-ÿ\s-]/g, ''))}
+                            className="w-full h-11 px-3.5 border border-slate-300 rounded-xl text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37] bg-white outline-none text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-[#0B132B] uppercase tracking-wider">Nom *</label>
+                          <input
+                            type="text"
+                            placeholder="Dupont"
+                            value={nom}
+                            onChange={(e) => setNom(e.target.value.replace(/[^A-Za-zÀ-ÿ\s-]/g, ''))}
+                            className="w-full h-11 px-3.5 border border-slate-300 rounded-xl text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37] bg-white outline-none text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-[#0B132B] uppercase tracking-wider">Date de naissance *</label>
+                        <input
+                          type="date"
+                          max={minAgeDate}
+                          value={dateNaissance}
+                          onChange={(e) => setDateNaissance(e.target.value)}
+                          className="w-full h-11 px-3.5 border border-slate-300 rounded-xl text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37] bg-white outline-none text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {mutuelleStep === 5 && (
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-[#0B132B] uppercase tracking-wider">Adresse postale *</label>
+                        <input
+                          type="text"
+                          placeholder="12 Rue de la Paix"
+                          value={adresse}
+                          onChange={(e) => setAdresse(e.target.value)}
+                          className="w-full h-11 px-3.5 border border-slate-300 rounded-xl text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37] bg-white outline-none text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-[#0B132B] uppercase tracking-wider">Code postal *</label>
+                        <input
+                          type="text"
+                          placeholder="75002"
+                          maxLength={5}
+                          value={codePostal}
+                          onChange={(e) => setCodePostal(e.target.value.replace(/\D/g, ""))}
+                          className="w-full h-11 px-3.5 border border-slate-300 rounded-xl text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37] bg-white outline-none text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {mutuelleStep === 6 && (
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-[#0B132B] uppercase tracking-wider">Numéro de téléphone *</label>
+                        <input
+                          type="text"
+                          placeholder="+33 6 12 34 56 78"
+                          value={telephone}
+                          onChange={(e) => {
+                            const formatted = formatTelephone(e.target.value);
+                            setTelephone(formatted);
+                          }}
+                          className="w-full h-11 px-3.5 border border-slate-300 rounded-xl text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37] bg-white outline-none text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-[#0B132B] uppercase tracking-wider">Adresse E-mail *</label>
+                        <input
+                          type="email"
+                          placeholder="jean.dupont@exemple.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full h-11 px-3.5 border border-slate-300 rounded-xl text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37] bg-white outline-none text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {mutuelleStep === 7 && (
+                    <div className="space-y-4">
+                      <p className="text-sm font-semibold text-[#0B132B]">Étape 7 : Planifier votre appel</p>
+                      
+                      {/* Top Container (Appel immédiat) */}
+                      <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        <p className="text-[#0B132B] font-semibold text-xs mb-3 uppercase tracking-wider">Être rappelé rapidement (Appel immédiat)</p>
+                        <div className="grid grid-cols-2 gap-4">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCallPreference("15min");
+                              setMutuelleError(null);
+                            }}
+                            className={`h-11 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer border ${
+                              callPreference === "15min"
+                                ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
+                                : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
+                            }`}
+                          >
+                            15 min
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCallPreference("30min");
+                              setMutuelleError(null);
+                            }}
+                            className={`h-11 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer border ${
+                              callPreference === "30min"
+                                ? "bg-[#0B132B] text-white border-[#0B132B] shadow-md shadow-[#0B132B]/20"
+                                : "bg-white text-[#0B132B] border-slate-300 hover:bg-slate-50"
+                            }`}
+                          >
+                            30 min
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Bottom Container (Date ultérieure) */}
+                      <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        <p className="text-[#0B132B] font-semibold text-xs mb-3 uppercase tracking-wider">Ou choisir une date ultérieure</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <input
+                            type="date"
+                            min={todayString}
+                            className="w-full h-11 px-3 border border-slate-300 rounded-xl text-sm text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
+                            value={callDate}
+                            onChange={(e) => {
+                              setCallDate(e.target.value);
+                              setCallPreference('custom');
+                            }}
+                          />
+                          <div className="flex gap-2">
+                            <select
+                              className="w-full h-11 px-3 border border-slate-300 rounded-xl text-sm text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
+                              value={callHour}
+                              onChange={(e) => {
+                                setCallHour(e.target.value);
+                                setCallPreference('custom');
+                              }}
+                            >
+                              <option value="" disabled>Heure</option>
+                              {HOURS.map(h => (
+                                <option key={h} value={h}>{h}h</option>
+                              ))}
+                            </select>
+                            <select
+                              className="w-full h-11 px-3 border border-slate-300 rounded-xl text-sm text-[#0B132B] focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent bg-white"
+                              value={callMinute}
+                              onChange={(e) => {
+                                setCallMinute(e.target.value);
+                                setCallPreference('custom');
+                              }}
+                            >
+                              <option value="" disabled>Min</option>
+                              {callHour === "19" ? (
+                                <option value="00">00</option>
+                              ) : (
+                                MINUTES.map(m => (
+                                  <option key={m} value={m}>{m}</option>
+                                ))
+                              )}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Navigation */}
+                <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center shrink-0">
+                  <Button
+                    variant="ghost"
+                    onClick={mutuelleStep > 1 ? handlePrevStep : () => setIsMutuelleOpen(false)}
+                    className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl px-5"
+                    type="button"
+                  >
+                    {mutuelleStep > 1 ? "Précédent" : "Fermer"}
+                  </Button>
+
+                  {mutuelleStep < 7 ? (
+                    <Button
+                      onClick={handleNextStep}
+                      className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-bold px-6 py-2.5 rounded-xl shadow-lg transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
+                    >
+                      Suivant
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleMutuelleSubmit}
+                      disabled={isMutuelleSubmitting}
+                      className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-bold px-6 py-2.5 rounded-xl shadow-lg transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer flex items-center gap-2"
+                    >
+                      {isMutuelleSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Confirmation...
+                        </>
+                      ) : (
+                        "Confirmer le rendez-vous"
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-8 text-center space-y-6 flex-1 overflow-y-auto">
+                <div className="bg-[#D4AF37]/10 p-4 rounded-full text-[#D4AF37] animate-bounce">
+                  <CheckCircle className="h-16 w-16" />
+                </div>
+                <div className="space-y-2 max-w-md">
+                  <h3 className="text-2xl font-bold text-[#0B132B]">
+                    Rendez-vous confirmé. À très vite !
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed text-sm">
+                    Merci <span className="font-semibold text-slate-900">{prenom}</span>. Votre demande de devis pour l'assurance <span className="font-semibold text-[#D4AF37]">Santé / Mutuelle</span> a été transmise avec succès à nos conseillers. Un expert vous contactera très rapidement pour vous proposer les meilleures offres.
+                  </p>
+                </div>
+                <div className="w-full max-w-xs pt-4">
+                  <Button
+                    onClick={() => setIsMutuelleOpen(false)}
+                    className="w-full bg-[#0B132B] hover:bg-[#152244] text-white font-medium py-3 rounded-xl transition-all duration-300 cursor-pointer shadow-md"
+                  >
+                    Fermer la fenêtre
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
