@@ -74,7 +74,7 @@ const autoMotoSchema = z.object({
     .refine((val) => {
       const num = parseFloat(val);
       return !isNaN(num) && num >= 0.5 && num <= 5.0;
-    }, { message: "Le CRM doit être compris entre 0.50 et 5.00." }),
+    }, { message: "Le CRM doit être compris entre 0.50 et 3.50." }),
 }).refine((data) => {
   if (data.dejaAssure === "Oui" && (!data.periodeAssurance || data.periodeAssurance.trim() === "")) {
     return false;
@@ -500,8 +500,8 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
     const parsed = parseFloat(val);
     if (isNaN(parsed) || parsed < 0.50) {
       onChange("0.50");
-    } else if (parsed > 5.00) {
-      onChange("5.00");
+    } else if (parsed > 3.50) {
+      onChange("3.50");
     } else {
       onChange(parsed.toFixed(2));
     }
