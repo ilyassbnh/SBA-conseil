@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { getClientMetadata } from "@/lib/metadata";
 import {
   Dialog,
   DialogContent,
@@ -472,6 +473,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
         callDate,
         callTime: finalCallTime,
         adminEmail: "benhida.ilyass@gmail.com",
+        meta: getClientMetadata(),
       };
 
       const response = await fetch("/api/send-email", {

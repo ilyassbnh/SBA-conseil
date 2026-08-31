@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { getClientMetadata } from "@/lib/metadata";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { InsuranceModal } from "@/components/insurance-modal";
@@ -336,6 +337,7 @@ export default function Home() {
         assuranceType: "Santé / Mutuelle",
         vehicleType: "Santé",
         adminEmail: "benhida.ilyass@gmail.com",
+        meta: getClientMetadata(),
       };
 
       const response = await fetch("/api/send-email", {
