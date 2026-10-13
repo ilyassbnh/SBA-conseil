@@ -254,6 +254,43 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
   const [callHour, setCallHour] = useState("");
   const [callMinute, setCallMinute] = useState("");
 
+  // Countdown timer for confirmation modal dismissal
+  const [countdown, setCountdown] = useState(10);
+
+  useEffect(() => {
+    if (!isConfirmed) {
+      setCountdown(10);
+      return;
+    }
+
+    setCountdown(10);
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isConfirmed]);
+
+  useEffect(() => {
+    if (!isOpen || !isConfirmed || countdown <= 0) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [isOpen, isConfirmed, countdown]);
+
   // Month Selector States
   const [startMonth, setStartMonth] = useState<string>("");
   const [startYear, setStartYear] = useState<string>("");
@@ -356,6 +393,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
   };
 
   const handleClose = () => {
+    if (isConfirmed && countdown > 0) return;
     onOpenChange(false);
     setTimeout(() => {
       setStep(1);
@@ -363,6 +401,7 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
       setSubmittedInfo(null);
       setIsSubmitted(false);
       setIsConfirmed(false);
+      setCountdown(10);
       setScheduleMode("immediate");
       setCallPreference(null);
       setCallDate("");
@@ -512,24 +551,37 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
   const todayString = new Date().toISOString().split("T")[0];
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => (open ? null : handleClose())}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          if (isConfirmed && countdown > 0) return;
+          handleClose();
+        }
+      }}
+    >
       <DialogContent
         showCloseButton={false}
-        onClick={handleClose}
+        onClick={() => {
+          if (isConfirmed && countdown > 0) return;
+          handleClose();
+        }}
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 !translate-x-0 !translate-y-0 !top-0 !left-0 !max-w-none rounded-none bg-transparent ring-0 border-none shadow-none p-0 overflow-hidden outline-none cursor-pointer"
       >
         <div 
           onClick={(e) => e.stopPropagation()}
           className="w-full max-w-lg bg-white rounded-xl shadow-xl flex flex-col h-auto max-h-[95vh] md:max-h-[85vh] border border-slate-200 text-slate-900 overflow-hidden relative cursor-default"
         >
-          <button
-            onClick={handleClose}
-            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors z-[60]"
-            type="button"
-          >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Fermer</span>
-          </button>
+          {!(isConfirmed && countdown > 0) && (
+            <button
+              onClick={handleClose}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors z-[60]"
+              type="button"
+            >
+              <X className="h-5 w-5" />
+              <span className="sr-only">Fermer</span>
+            </button>
+          )}
 
           {step === 1 && (
           <div className="space-y-6 p-6 sm:p-8 overflow-y-auto flex-1 flex flex-col">
@@ -571,8 +623,8 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
 
         {step === 2 && selectedChoice && (
           <div className="flex flex-col flex-1 overflow-hidden h-full">
-            <div className="flex items-center gap-3 p-6 pb-2 sm:p-8 sm:pb-2">
-              {!isConfirmed && (
+            {!isConfirmed && (
+              <div className="flex items-center gap-3 p-6 pb-2 sm:p-8 sm:pb-2">
                 <Button
                   variant="ghost"
                   onClick={isSubmitted ? () => setIsSubmitted(false) : handleBackToStep1}
@@ -582,24 +634,20 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                   <ArrowLeft className="h-5 w-5" />
                   <span className="sr-only">Retour</span>
                 </Button>
-              )}
-              <DialogHeader className="flex-1">
-                <DialogTitle className="text-2xl font-bold text-[#0B132B]">
-                  {isConfirmed
-                    ? "Rendez-vous confirmed !"
-                    : isSubmitted
-                    ? "Dossier pré-validé. Réservez votre appel."
-                    : `Formulaire Devis - ${selectedChoice.title}`}
-                </DialogTitle>
-                <DialogDescription className="text-slate-500">
-                  {isConfirmed
-                    ? "Votre entretien avec un conseiller SBA Conseil est planifié."
-                    : isSubmitted
-                    ? "Choisissez un créneau ci-dessous avec l'un de nos conseillers SBA pour finaliser votre devis."
-                    : "Veuillez renseigner les informations ci-dessous pour votre devis."}
-                </DialogDescription>
-              </DialogHeader>
-            </div>
+                <DialogHeader className="flex-1">
+                  <DialogTitle className="text-2xl font-bold text-[#0B132B]">
+                    {isSubmitted
+                      ? "Dossier pré-validé. Réservez votre appel."
+                      : `Formulaire Devis - ${selectedChoice.title}`}
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-500">
+                    {isSubmitted
+                      ? "Choisissez un créneau ci-dessous avec l'un de nos conseillers SBA pour finaliser votre devis."
+                      : "Veuillez renseigner les informations ci-dessous pour votre devis."}
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
+            )}
 
             {!isSubmitted ? (
               <div className="flex-1 flex flex-col overflow-hidden">
@@ -1215,44 +1263,31 @@ export function InsuranceModal({ isOpen, onOpenChange, defaultChoiceId, onShowTo
                 </div>
               </form>
             ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-center space-y-6 w-full max-w-full overflow-y-auto px-4 flex-1">
+              <div className="flex flex-col items-center justify-center p-8 text-center space-y-6 w-full max-w-full overflow-y-auto flex-1">
                 <div className="bg-[#D4AF37]/10 p-4 rounded-full text-[#D4AF37] animate-bounce">
                   <CheckCircle className="h-16 w-16" />
                 </div>
 
-                <div className="space-y-2 max-w-md">
-                  <DialogTitle className="text-2xl font-bold text-[#0B132B]">
-                    Rendez-vous confirmed. À très vite !
-                  </DialogTitle>
-                  <DialogDescription className="text-slate-600 leading-relaxed text-sm">
-                    Merci <span className="font-semibold text-slate-955">{submittedInfo?.nom}</span>. Votre demande de devis pour l'assurance <span className="font-semibold text-[#D4AF37]">{selectedChoice.title}</span> est pré-validée.
-                  </DialogDescription>
+                <DialogTitle className="sr-only">Confirmation</DialogTitle>
+                <DialogDescription className="sr-only">Message de confirmation</DialogDescription>
+
+                <div className="max-w-md">
+                  <p className="text-slate-700 leading-relaxed text-sm sm:text-base font-normal">
+                    Merci pour votre test. Ce projet a été initialement développé dans le cadre de notre collaboration. Je serais ravi de poursuivre et finaliser son développement (mise en production, intégrations CRM, nom de domaine et optimisations) en tant que freelance.
+                  </p>
                 </div>
 
-                <div className="p-5 bg-slate-50 rounded-2xl w-full max-w-md text-left border border-slate-200 space-y-3">
-                  <p className="text-xs text-[#D4AF37] uppercase tracking-wider font-semibold">Détails de votre entretien</p>
-                  <div className="text-sm space-y-1.5">
-                    {callPreference === "15min" || callPreference === "30min" ? (
-                      <>
-                        <p className="text-slate-600"><span className="font-medium text-slate-500">Type de rappel :</span> Immédiat</p>
-                        <p className="text-slate-600"><span className="font-medium text-slate-500">Délai :</span> {callPreference === "15min" ? "15 minutes" : "30 minutes"}</p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-slate-600"><span className="font-medium text-slate-500">Type de rappel :</span> Planifié</p>
-                        <p className="text-slate-600"><span className="font-medium text-slate-500">Date & Heure :</span> Le {callDate} à {callHour}:{callMinute}</p>
-                      </>
-                    )}
-                    <p className="text-slate-600"><span className="font-medium text-slate-500">Téléphone de contact :</span> {submittedInfo?.telephone}</p>
-                  </div>
-                </div>
-
-                <div className="w-full max-w-md pt-2">
+                <div className="w-full max-w-xs pt-4">
                   <Button
+                    disabled={countdown > 0}
                     onClick={handleClose}
-                    className="w-full bg-[#0B132B] hover:bg-[#152244] text-white font-medium py-3 rounded-xl transition-all duration-300 cursor-pointer shadow-md"
+                    className={`w-full font-medium py-3 rounded-xl transition-all duration-300 shadow-md ${
+                      countdown > 0
+                        ? "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-200"
+                        : "bg-[#0B132B] hover:bg-[#152244] text-white cursor-pointer"
+                    }`}
                   >
-                    Fermer la fenêtre
+                    {countdown > 0 ? `Fermer (${countdown}s)` : "Fermer"}
                   </Button>
                 </div>
               </div>

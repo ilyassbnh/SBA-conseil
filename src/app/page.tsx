@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { getClientMetadata } from "@/lib/metadata";
+import { trackQuoteClick } from "@/lib/telemetry";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { InsuranceModal } from "@/components/insurance-modal";
@@ -160,9 +161,76 @@ export default function Home() {
 
   const [mutuelleError, setMutuelleError] = useState<string | null>(null);
 
+  // Countdown timer for Mutuelle confirmation modal dismissal
+  const [mutuelleCountdown, setMutuelleCountdown] = useState(10);
+
+  useEffect(() => {
+    if (!mutuelleSuccess) {
+      setMutuelleCountdown(10);
+      return;
+    }
+
+    setMutuelleCountdown(10);
+    const interval = setInterval(() => {
+      setMutuelleCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [mutuelleSuccess]);
+
+  useEffect(() => {
+    if (!isMutuelleOpen || !mutuelleSuccess || mutuelleCountdown <= 0) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [isMutuelleOpen, mutuelleSuccess, mutuelleCountdown]);
+
+  const handleCloseMutuelle = () => {
+    if (mutuelleSuccess && mutuelleCountdown > 0) return;
+    setIsMutuelleOpen(false);
+    setTimeout(() => {
+      setMutuelleStep(1);
+      setMutuelleSuccess(false);
+      setMutuelleCountdown(10);
+      setGenre(null);
+      setQuiAssurer(null);
+      setActivite(null);
+      setPrenom("");
+      setNom("");
+      setDateNaissance("");
+      setAdresse("");
+      setCodePostal("");
+      setTelephone("+33 ");
+      setEmail("");
+      setCallPreference(null);
+      setCallDate("");
+      setCallHour("");
+      setCallMinute("");
+      setMutuelleError(null);
+    }, 200);
+  };
+
   const showToastNotification = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleStartQuote = async (choiceId?: string) => {
+    trackQuoteClick();
+    handleOpenModal(choiceId);
   };
 
   const handleOpenModal = (choiceId?: string) => {
@@ -184,6 +252,7 @@ export default function Home() {
       setCallMinute("");
       setMutuelleError(null);
       setMutuelleSuccess(false);
+      setMutuelleCountdown(10);
       setIsMutuelleOpen(true);
       return;
     }
@@ -483,7 +552,7 @@ export default function Home() {
         </div>
       )}
 
-      <Header onGetQuoteClick={() => handleOpenModal()} />
+      <Header onGetQuoteClick={() => handleStartQuote()} />
 
       <main className="flex-grow">
         {/* Hero Section */}
@@ -510,7 +579,7 @@ export default function Home() {
 
             <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-5">
               <Button
-                onClick={() => handleOpenModal()}
+                onClick={async () => handleStartQuote()}
                 className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#c39e2e] text-white text-base font-bold py-5 px-9 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 flex items-center justify-center gap-2 group border border-[#D4AF37]/20 cursor-pointer"
               >
                 Obtenir un devis personnalisé
@@ -583,7 +652,7 @@ export default function Home() {
                       </p>
                     </div>
                     <Button
-                      onClick={() => handleOpenModal(offer.id)}
+                      onClick={async () => handleStartQuote(offer.id)}
                       className="w-full bg-[#D4AF37] hover:bg-[#c39e2e] text-white rounded-xl py-3 font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 group/btn cursor-pointer"
                     >
                       Obtenir mon devis
@@ -613,7 +682,7 @@ export default function Home() {
                       </p>
                     </div>
                     <Button
-                      onClick={() => handleOpenModal(offer.id)}
+                      onClick={async () => handleStartQuote(offer.id)}
                       className="w-full bg-[#D4AF37] hover:bg-[#c39e2e] text-white rounded-xl py-3 font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 group/btn cursor-pointer"
                     >
                       {offer.id === "sante" ? "Obtenir mon devis" : "Nous contacter"}
@@ -762,7 +831,7 @@ export default function Home() {
             </p>
             <div className="pt-4">
               <Button
-                onClick={() => handleOpenModal()}
+                onClick={async () => handleStartQuote()}
                 className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-bold py-5 px-9 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 inline-flex items-center gap-2 border border-[#D4AF37]/20 cursor-pointer"
               >
                 Demander mon devis maintenant
@@ -789,21 +858,23 @@ export default function Home() {
       {/* Health Insurance (Mutuelle) Multi-step Modal */}
       {isMutuelleOpen && (
         <div
-          onClick={() => setIsMutuelleOpen(false)}
+          onClick={handleCloseMutuelle}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-hidden"
         >
           <div
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-lg bg-white rounded-xl shadow-xl flex flex-col h-auto max-h-[95vh] md:max-h-[85vh] border border-slate-200 text-slate-900 overflow-hidden relative"
           >
-            <button
-              onClick={() => setIsMutuelleOpen(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors z-[60]"
-              type="button"
-            >
-              <X className="h-5 w-5" />
-              <span className="sr-only">Fermer</span>
-            </button>
+            {!(mutuelleSuccess && mutuelleCountdown > 0) && (
+              <button
+                onClick={handleCloseMutuelle}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors z-[60]"
+                type="button"
+              >
+                <X className="h-5 w-5" />
+                <span className="sr-only">Fermer</span>
+              </button>
+            )}
 
             {!mutuelleSuccess ? (
               <div className="flex flex-col flex-1 overflow-hidden">
@@ -1129,7 +1200,7 @@ export default function Home() {
                 <div className="border-t border-slate-100 p-4 bg-white flex justify-between items-center shrink-0">
                   <Button
                     variant="ghost"
-                    onClick={mutuelleStep > 1 ? handlePrevStep : () => setIsMutuelleOpen(false)}
+                    onClick={mutuelleStep > 1 ? handlePrevStep : handleCloseMutuelle}
                     className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl px-5"
                     type="button"
                   >
@@ -1167,20 +1238,22 @@ export default function Home() {
                 <div className="bg-[#D4AF37]/10 p-4 rounded-full text-[#D4AF37] animate-bounce">
                   <CheckCircle className="h-16 w-16" />
                 </div>
-                <div className="space-y-2 max-w-md">
-                  <h3 className="text-2xl font-bold text-[#0B132B]">
-                    Rendez-vous confirmé. À très vite !
-                  </h3>
-                  <p className="text-slate-600 leading-relaxed text-sm">
-                    Merci <span className="font-semibold text-slate-900">{prenom}</span>. Votre demande de devis pour l'assurance <span className="font-semibold text-[#D4AF37]">Santé / Mutuelle</span> a été transmise avec succès à nos conseillers. Un expert vous contactera très rapidement pour vous proposer les meilleures offres.
+                <div className="max-w-md">
+                  <p className="text-slate-700 leading-relaxed text-sm sm:text-base font-normal">
+                    Merci pour votre test. Ce projet a été initialement développé dans le cadre de notre collaboration. Je serais ravi de poursuivre et finaliser son développement (mise en production, intégrations CRM, nom de domaine et optimisations) en tant que freelance.
                   </p>
                 </div>
                 <div className="w-full max-w-xs pt-4">
                   <Button
-                    onClick={() => setIsMutuelleOpen(false)}
-                    className="w-full bg-[#0B132B] hover:bg-[#152244] text-white font-medium py-3 rounded-xl transition-all duration-300 cursor-pointer shadow-md"
+                    disabled={mutuelleCountdown > 0}
+                    onClick={handleCloseMutuelle}
+                    className={`w-full font-medium py-3 rounded-xl transition-all duration-300 shadow-md ${
+                      mutuelleCountdown > 0
+                        ? "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-200"
+                        : "bg-[#0B132B] hover:bg-[#152244] text-white cursor-pointer"
+                    }`}
                   >
-                    Fermer la fenêtre
+                    {mutuelleCountdown > 0 ? `Fermer (${mutuelleCountdown}s)` : "Fermer"}
                   </Button>
                 </div>
               </div>

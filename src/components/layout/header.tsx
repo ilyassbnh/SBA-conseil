@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trackQuoteClick } from "@/lib/telemetry";
 
 interface HeaderProps {
   onGetQuoteClick: () => void;
@@ -83,7 +84,10 @@ export function Header({ onGetQuoteClick }: HeaderProps) {
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-4">
           <Button
-            onClick={onGetQuoteClick}
+            onClick={async () => {
+              trackQuoteClick();
+              onGetQuoteClick();
+            }}
             className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-semibold rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer"
           >
             Obtenir un devis
@@ -134,7 +138,8 @@ export function Header({ onGetQuoteClick }: HeaderProps) {
             </Link>
           </nav>
           <Button
-            onClick={() => {
+            onClick={async () => {
+              trackQuoteClick();
               setIsMobileMenuOpen(false);
               onGetQuoteClick();
             }}
