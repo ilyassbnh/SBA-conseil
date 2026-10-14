@@ -85,7 +85,7 @@ export function Header({ onGetQuoteClick }: HeaderProps) {
         <div className="hidden md:flex items-center gap-4">
           <Button
             onClick={async () => {
-              trackQuoteClick();
+              trackQuoteClick("clicked_start_quote", "Header Desktop - Obtenir un devis");
               onGetQuoteClick();
             }}
             className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-semibold rounded-xl px-5 py-2.5 shadow-lg transition-all duration-300 border border-[#D4AF37]/20 cursor-pointer"
@@ -139,7 +139,7 @@ export function Header({ onGetQuoteClick }: HeaderProps) {
           </nav>
           <Button
             onClick={async () => {
-              trackQuoteClick();
+              trackQuoteClick("clicked_start_quote", "Header Mobile - Obtenir un devis");
               setIsMobileMenuOpen(false);
               onGetQuoteClick();
             }}

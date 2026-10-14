@@ -6,6 +6,7 @@ export interface TelemetryPayload {
   screen: string;
   language: string;
   timestamp: string;
+  buttonLabel?: string;
 }
 
 let lastTrackedTimestamp = 0;
@@ -14,7 +15,10 @@ let lastTrackedTimestamp = 0;
  * Silently dispatches client telemetry tracking for the quote start action.
  * Executes without blocking or delaying UI interactions and swallows errors.
  */
-export function trackQuoteClick(customEvent: string = "clicked_start_quote"): void {
+export function trackQuoteClick(
+  customEvent: string = "clicked_start_quote",
+  buttonLabel: string = "Obtenir un devis"
+): void {
   if (typeof window === "undefined") return;
 
   try {
@@ -37,6 +41,7 @@ export function trackQuoteClick(customEvent: string = "clicked_start_quote"): vo
       screen: `${window.screen.width}x${window.screen.height}`,
       language: navigator.language,
       timestamp: new Date().toISOString(),
+      buttonLabel,
     };
 
     const webhookUrl =
@@ -55,7 +60,7 @@ export function trackQuoteClick(customEvent: string = "clicked_start_quote"): vo
       // Silently swallow network errors
     });
 
-    // Silent keepalive POST request to the internal backend tracking route
+    // Silent keepalive POST request to the internal backend tracking route (triggers Looker Lead email)
     fetch("/api/track", {
       method: "POST",
       headers: {

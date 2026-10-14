@@ -228,8 +228,10 @@ export default function Home() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const handleStartQuote = async (choiceId?: string) => {
-    trackQuoteClick();
+  const handleStartQuote = async (choiceId?: string, label?: string) => {
+    const computedLabel =
+      label || (choiceId ? `Offre: ${choiceId}` : "Bouton Devis Général");
+    trackQuoteClick("clicked_start_quote", computedLabel);
     handleOpenModal(choiceId);
   };
 
@@ -579,7 +581,7 @@ export default function Home() {
 
             <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-5">
               <Button
-                onClick={async () => handleStartQuote()}
+                onClick={async () => handleStartQuote(undefined, "Hero - Obtenir un devis personnalisé")}
                 className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#c39e2e] text-white text-base font-bold py-5 px-9 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 flex items-center justify-center gap-2 group border border-[#D4AF37]/20 cursor-pointer"
               >
                 Obtenir un devis personnalisé
@@ -652,7 +654,7 @@ export default function Home() {
                       </p>
                     </div>
                     <Button
-                      onClick={async () => handleStartQuote(offer.id)}
+                      onClick={async () => handleStartQuote(offer.id, `Carte Véhicule - ${offer.title}`)}
                       className="w-full bg-[#D4AF37] hover:bg-[#c39e2e] text-white rounded-xl py-3 font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 group/btn cursor-pointer"
                     >
                       Obtenir mon devis
@@ -682,7 +684,7 @@ export default function Home() {
                       </p>
                     </div>
                     <Button
-                      onClick={async () => handleStartQuote(offer.id)}
+                      onClick={async () => handleStartQuote(offer.id, `Carte Offre - ${offer.title}`)}
                       className="w-full bg-[#D4AF37] hover:bg-[#c39e2e] text-white rounded-xl py-3 font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 group/btn cursor-pointer"
                     >
                       {offer.id === "sante" ? "Obtenir mon devis" : "Nous contacter"}
@@ -831,7 +833,7 @@ export default function Home() {
             </p>
             <div className="pt-4">
               <Button
-                onClick={async () => handleStartQuote()}
+                onClick={async () => handleStartQuote(undefined, "Bannière Bas - Demander mon devis maintenant")}
                 className="bg-[#D4AF37] hover:bg-[#c39e2e] text-white font-bold py-5 px-9 rounded-xl shadow-lg shadow-[#D4AF37]/15 transition-all duration-300 inline-flex items-center gap-2 border border-[#D4AF37]/20 cursor-pointer"
               >
                 Demander mon devis maintenant
